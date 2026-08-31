@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "crmartinez.onedrive",
+  "name": "OneDrive",
+  "version": "0.1.0",
+  "author": "crmartinez",
+  "license": "MIT",
+  "description": "Microsoft OneDrive personal client for the Omarchy bar.",
+  "kinds": ["bar-widget", "service"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "service": "Service.qml"
+  },
+  "barWidget": {
+    "displayName": "OneDrive",
+    "category": "Cloud storage",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

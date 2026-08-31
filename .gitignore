@@ -1,0 +1,7 @@
+helper/.venv/
+helper/__pycache__/
+*.pyc
+.env
+config.local.json
+tokens.json
+credentials.json
