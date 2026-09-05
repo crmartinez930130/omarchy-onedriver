@@ -23,9 +23,13 @@ class Helper:
         if method == "auth.refresh":
             return self.refresh()
         if method == "drive.list":
-            if not self.tokens:
-                raise RuntimeError("Not authenticated")
-            return {"items": GraphClient(self.tokens["access_token"]).list_children(params.get("itemId"))}
+            return {"items": self._graph().list_children(params.get("itemId"))}
+        if method == "drive.mkdir":
+            return self._graph().create_folder(params["parentId"], params["name"])
+        if method == "drive.rename":
+            return self._graph().rename(params["itemId"], params["name"])
+        if method == "drive.delete":
+            return self._graph().delete(params["itemId"])
         if method == "transfer.list":
             return self._manager().list()
         if method == "transfer.cancel":
@@ -37,6 +41,11 @@ class Helper:
         if method == "auth.login":
             return self.login()
         raise ValueError("Unknown method")
+
+    def _graph(self):
+        if not self.tokens:
+            raise RuntimeError("Not authenticated")
+        return GraphClient(self.tokens["access_token"])
 
     def _manager(self):
         if not self.tokens:
