@@ -21,8 +21,9 @@ Item {
         spacing: 5
 
         Text {
-            text: root.transferActive ? "󰇚" : "󰕳"
+            text: root.transferActive ? "󰇚" : "󰏊"
             color: root.signedIn ? "#a6e3a1" : "#bac2de"
+            font.family: root.service ? root.service.fontFamily : "monospace"
             font.pixelSize: 16
         }
 

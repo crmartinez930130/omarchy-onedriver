@@ -15,6 +15,7 @@ Item {
     property bool signedIn: false
     property bool busy: false
     property string lastError: ""
+    property string fontFamily: "monospace"
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -39,6 +40,22 @@ Item {
     Component.onCompleted: {
         start()
         refreshStatus()
+        fontMatchProcess.running = true
+    }
+
+    // Icon glyphs are Nerd Font codepoints; resolve the same fontconfig
+    // alias the shell itself uses so they render on whatever Nerd Font the
+    // user has picked via `omarchy font set` instead of the app default.
+    Process {
+        id: fontMatchProcess
+        command: ["fc-match", "-f", "%{family[0]}", "monospace"]
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                var name = String(text || "").trim()
+                if (name.length > 0) root.fontFamily = name
+            }
+        }
     }
 
     function _call(method, params, onResult) {
@@ -148,6 +165,24 @@ Item {
 
     function cancelTransfer(transferId) {
         _call("transfer.cancel", {transferId: transferId}, function () { _pollTransfers() })
+    }
+
+    function createFolder(name) {
+        _call("drive.mkdir", {parentId: root.currentFolderId, name: name}, function (result, error) {
+            if (!error) refresh()
+        })
+    }
+
+    function renameItem(itemId, name) {
+        _call("drive.rename", {itemId: itemId, name: name}, function (result, error) {
+            if (!error) refresh()
+        })
+    }
+
+    function deleteItem(itemId) {
+        _call("drive.delete", {itemId: itemId}, function (result, error) {
+            if (!error) refresh()
+        })
     }
 
     function _pollTransfers() {
