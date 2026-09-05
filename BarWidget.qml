@@ -6,8 +6,11 @@ Item {
     id: root
 
     property string moduleName: "crmartinez.onedrive"
-    property bool signedIn: false
-    property bool transferActive: false
+    property var bar: null
+
+    readonly property var service: bar && bar.shell ? bar.shell.serviceFor(root.moduleName) : null
+    readonly property bool signedIn: service ? service.signedIn : false
+    readonly property bool transferActive: service ? service.transferActive : false
 
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
@@ -33,12 +36,13 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: panelLoader.active = true
+        onClicked: panelLoader.active = !panelLoader.active
     }
 
     Loader {
         id: panelLoader
         active: false
         source: "Panel.qml"
+        onLoaded: if (item) item.service = root.service
     }
 }
