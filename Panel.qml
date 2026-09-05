@@ -202,6 +202,35 @@ Item {
                         color: Theme.textDim
                         font.pixelSize: 12
                     }
+
+                    DropArea {
+                        id: uploadDropArea
+                        anchors.fill: parent
+                        onEntered: function (drag) { drag.accepted = drag.hasUrls }
+                        onDropped: function (drop) {
+                            for (var i = 0; i < drop.urls.length; i++) {
+                                var path = root._urlToPath(drop.urls[i])
+                                var name = path.substring(path.lastIndexOf("/") + 1)
+                                if (name !== "" && root.service) root.service.startUpload(path, name)
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            visible: uploadDropArea.containsDrag
+                            radius: 8
+                            color: Qt.rgba(0.537, 0.706, 0.980, 0.14)
+                            border.color: Theme.accent
+                            border.width: 2
+
+                            Label {
+                                anchors.centerIn: parent
+                                text: "Drop to upload"
+                                color: Theme.accent
+                                font.pixelSize: 13
+                            }
+                        }
+                    }
                 }
 
                 Rectangle {
@@ -248,13 +277,57 @@ Item {
         }
     }
 
+    component DialogButton: Button {
+        id: dialogButton
+        property bool primary: false
+        property color accentColor: Theme.accent
+        implicitWidth: 76
+        implicitHeight: 28
+        contentItem: Text {
+            text: dialogButton.text
+            color: dialogButton.primary ? Theme.background : Theme.text
+            font.pixelSize: 12
+            font.bold: dialogButton.primary
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        background: Rectangle {
+            radius: 6
+            border.width: dialogButton.primary ? 0 : 1
+            border.color: Theme.border
+            color: dialogButton.primary
+                ? (dialogButton.down ? Qt.darker(dialogButton.accentColor, 1.15) : dialogButton.accentColor)
+                : (dialogButton.down ? Theme.surfaceHover : "transparent")
+        }
+    }
+
+    component DialogFooter: Item {
+        id: footer
+        signal cancelClicked()
+        signal confirmClicked()
+        property string confirmLabel: "OK"
+        property color confirmColor: Theme.accent
+
+        implicitHeight: 50
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: 12
+            spacing: 8
+            Item { Layout.fillWidth: true }
+            DialogButton { text: "Cancel"; onClicked: footer.cancelClicked() }
+            DialogButton { text: footer.confirmLabel; primary: true; accentColor: footer.confirmColor; onClicked: footer.confirmClicked() }
+        }
+    }
+
     component NamePromptDialog: Dialog {
         id: dialog
         property string initialValue: ""
+        property string confirmLabel: "OK"
         signal confirmed(string value)
 
         modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
+        standardButtons: Dialog.NoButton
         onOpened: { field.text = initialValue; field.selectAll(); field.forceActiveFocus() }
         onAccepted: if (field.text.trim() !== "") dialog.confirmed(field.text.trim())
 
@@ -284,15 +357,23 @@ Item {
             }
             Keys.onReturnPressed: dialog.accept()
         }
+
+        footer: DialogFooter {
+            confirmLabel: dialog.confirmLabel
+            onCancelClicked: dialog.reject()
+            onConfirmClicked: dialog.accept()
+        }
     }
 
     component ConfirmDialog: Dialog {
         id: dialog
         property string message: ""
+        property string confirmLabel: "OK"
+        property color confirmColor: Theme.accent
         signal confirmed()
 
         modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
+        standardButtons: Dialog.NoButton
         onAccepted: dialog.confirmed()
 
         background: Rectangle {
@@ -314,17 +395,26 @@ Item {
             color: Theme.textMuted
             wrapMode: Text.WordWrap
         }
+
+        footer: DialogFooter {
+            confirmLabel: dialog.confirmLabel
+            confirmColor: dialog.confirmColor
+            onCancelClicked: dialog.reject()
+            onConfirmClicked: dialog.accept()
+        }
     }
 
     NamePromptDialog {
         id: newFolderDialog
         title: "New folder"
+        confirmLabel: "Create"
         onConfirmed: function (value) { if (root.service) root.service.createFolder(value) }
     }
 
     NamePromptDialog {
         id: renameDialog
         title: "Rename"
+        confirmLabel: "Rename"
         property string targetId: ""
         onConfirmed: function (value) { if (root.service) root.service.renameItem(targetId, value) }
     }
@@ -332,6 +422,8 @@ Item {
     ConfirmDialog {
         id: deleteConfirm
         title: "Delete item"
+        confirmLabel: "Delete"
+        confirmColor: Theme.error
         property string targetId: ""
         onConfirmed: if (root.service) root.service.deleteItem(targetId)
     }
