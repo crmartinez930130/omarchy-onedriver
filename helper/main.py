@@ -54,6 +54,7 @@ class Helper:
             raise RuntimeError("ONEDRIVE_CLIENT_ID is not configured")
         self.tokens = OAuthClient(client_id).authenticate()
         self.store.save(self.tokens)
+        self.transfers = None
         return {"signedIn": True}
 
     def refresh(self):
@@ -63,6 +64,8 @@ class Helper:
         refreshed.setdefault("refresh_token", self.tokens["refresh_token"])
         self.tokens = refreshed
         self.store.save(self.tokens)
+        if self.transfers is not None:
+            self.transfers.graph.access_token = self.tokens["access_token"]
         return {"signedIn": True}
 
 
