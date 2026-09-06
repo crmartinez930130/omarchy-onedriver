@@ -13,8 +13,13 @@ Item {
     readonly property bool transferActive: service ? service.transferActive : false
 
     implicitWidth: content.implicitWidth
-    implicitHeight: content.implicitHeight
-    anchors.fill: parent
+    // The bar loads third-party widgets through a Loader whose own slot
+    // ends up zero-height for us (unlike first-party widgets, which extend
+    // a base class that sizes itself correctly) — anchors.fill: parent just
+    // inherits that zero. bar.height is the actual bar Item, sized right
+    // regardless of slot quirks, so anchor our own height to that instead.
+    implicitHeight: root.bar ? root.bar.height : content.implicitHeight
+    height: implicitHeight
 
     Row {
         id: content
