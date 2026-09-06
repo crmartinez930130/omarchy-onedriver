@@ -16,9 +16,10 @@ Item {
     // The bar loads third-party widgets through a Loader whose own slot
     // ends up zero-height for us (unlike first-party widgets, which extend
     // a base class that sizes itself correctly) — anchors.fill: parent just
-    // inherits that zero. bar.height is the actual bar Item, sized right
-    // regardless of slot quirks, so anchor our own height to that instead.
-    implicitHeight: root.bar ? root.bar.height : content.implicitHeight
+    // inherits that zero, and so does bar.height (a logical coordinator
+    // object, not the rendered surface). QsWindow.window is the actual
+    // PanelWindow behind the bar, so its height is the real one.
+    implicitHeight: root.QsWindow.window ? root.QsWindow.window.height : content.implicitHeight
     height: implicitHeight
 
     Row {
