@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Dialogs
 import "qml" as Components
 import "Theme.js" as Theme
 
@@ -164,7 +163,7 @@ Item {
                     GhostButton {
                         text: "󰕒"
                         toolTip: "Upload"
-                        onClicked: uploadDialog.open()
+                        onClicked: uploadPathDialog.open()
                     }
 
                     GhostButton {
@@ -326,6 +325,7 @@ Item {
         id: dialog
         property string initialValue: ""
         property string confirmLabel: "OK"
+        property string placeholder: ""
         signal confirmed(string value)
 
         x: Math.round(((parent ? parent.width : 0) - width) / 2)
@@ -352,6 +352,7 @@ Item {
         contentItem: TextField {
             id: field
             color: Theme.text
+            placeholderText: dialog.placeholder
             placeholderTextColor: Theme.textDim
             selectByMouse: true
             background: Rectangle {
@@ -434,14 +435,15 @@ Item {
         onConfirmed: if (root.service) root.service.deleteItem(targetId)
     }
 
-    FileDialog {
-        id: uploadDialog
-        title: "Upload to " + (root.service ? root.service.currentFolderName : "OneDrive")
-        fileMode: FileDialog.OpenFile
-        onAccepted: {
-            var path = root._urlToPath(selectedFile)
+    NamePromptDialog {
+        id: uploadPathDialog
+        title: "Upload"
+        confirmLabel: "Upload"
+        placeholder: "/home/user/file.pdf"
+        onConfirmed: function (value) {
+            var path = value.trim()
             var name = path.substring(path.lastIndexOf("/") + 1)
-            if (root.service) root.service.startUpload(path, name)
+            if (name !== "" && root.service) root.service.startUpload(path, name)
         }
     }
 }
