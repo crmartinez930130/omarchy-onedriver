@@ -14,6 +14,7 @@ Item {
 
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
+    anchors.fill: parent
 
     Row {
         id: content
