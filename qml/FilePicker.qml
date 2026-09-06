@@ -10,6 +10,11 @@ import "../Theme.js" as Theme
 ListView {
     id: root
     property string fontFamily: "monospace"
+    property string startPath: ""
+    // Browsing to pick a destination folder, not one or more files: files
+    // still show for context but aren't clickable, and there's no checkbox
+    // selection state to track — the caller reads currentPath instead.
+    property bool selectFolders: false
     property var selectedPaths: []
 
     readonly property string currentPath: String(folderModel.folder).replace("file://", "")
@@ -20,7 +25,11 @@ ListView {
     boundsBehavior: Flickable.StopAtBounds
     model: folderModel
 
-    Component.onCompleted: folderModel.folder = "file://" + Quickshell.env("HOME")
+    Component.onCompleted: resetToStart()
+
+    function resetToStart() {
+        folderModel.folder = "file://" + (root.startPath !== "" ? root.startPath : Quickshell.env("HOME"))
+    }
 
     function goUp() {
         if (canGoUp) folderModel.folder = folderModel.parentFolder
@@ -57,13 +66,18 @@ ListView {
         required property real fileSize
 
         readonly property bool selected: !fileIsDir && root.isSelected(filePath)
+        readonly property bool interactive: fileIsDir || !root.selectFolders
 
         width: root.width
         height: 36
-        hoverEnabled: true
+        hoverEnabled: delegate.interactive
         leftPadding: 10
         rightPadding: 6
-        onClicked: fileIsDir ? root.navigateTo(filePath) : root.toggleSelected(filePath)
+        opacity: delegate.interactive ? 1.0 : 0.4
+        onClicked: {
+            if (fileIsDir) { root.navigateTo(filePath); return }
+            if (!root.selectFolders) root.toggleSelected(filePath)
+        }
 
         background: Rectangle {
             radius: 6
@@ -74,8 +88,8 @@ ListView {
             spacing: 8
 
             Text {
-                text: delegate.fileIsDir ? "󰉋" : (delegate.selected ? "󰄲" : "󰄱")
-                color: delegate.fileIsDir ? Theme.accent : (delegate.selected ? Theme.accent : Theme.textDim)
+                text: delegate.fileIsDir ? "󰉋" : (root.selectFolders ? "󰈔" : (delegate.selected ? "󰄲" : "󰄱"))
+                color: delegate.fileIsDir ? Theme.accent : (!root.selectFolders && delegate.selected ? Theme.accent : Theme.textDim)
                 font.family: root.fontFamily
                 font.pixelSize: 15
                 Layout.alignment: Qt.AlignVCenter

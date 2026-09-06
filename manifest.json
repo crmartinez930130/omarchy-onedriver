@@ -17,7 +17,8 @@
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {
-      "downloadPath": ""
+      "downloadPath": "",
+      "uploadStartPath": ""
     },
     "schema": [
       {
@@ -26,6 +27,13 @@
         "label": "Download folder",
         "defaultValue": "",
         "description": "Where files are saved when you click one to download. Leave empty to use ~/Downloads."
+      },
+      {
+        "key": "uploadStartPath",
+        "type": "path",
+        "label": "Upload start folder",
+        "defaultValue": "",
+        "description": "Local folder the upload file browser opens to. Leave empty to start at your home folder."
       }
     ]
   }

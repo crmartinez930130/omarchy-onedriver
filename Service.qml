@@ -17,6 +17,7 @@ Item {
     property string lastError: ""
     property string fontFamily: "monospace"
     property string downloadPath: ""
+    property string uploadStartPath: ""
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -64,8 +65,17 @@ Item {
     // survives a restart and stays visible to `omarchy bar set`/list.
     function setDownloadPath(path) {
         root.downloadPath = path
+        _persistSetting("downloadPath", path)
+    }
+
+    function setUploadStartPath(path) {
+        root.uploadStartPath = path
+        _persistSetting("uploadStartPath", path)
+    }
+
+    function _persistSetting(key, value) {
         if (settingsProcess.running) return
-        settingsProcess.command = ["omarchy", "bar", "set", root.moduleName, "downloadPath", path]
+        settingsProcess.command = ["omarchy", "bar", "set", root.moduleName, key, value]
         settingsProcess.running = true
     }
 

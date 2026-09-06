@@ -94,9 +94,24 @@ Item {
                 GhostButton {
                     text: "⚙"
                     toolTip: "Settings"
-                    onClicked: {
-                        settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
-                        settingsDialog.open()
+                    onClicked: settingsMenu.open()
+
+                    Menu {
+                        id: settingsMenu
+                        MenuItem {
+                            text: "Download folder…"
+                            onTriggered: {
+                                settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
+                                settingsDialog.open()
+                            }
+                        }
+                        MenuItem {
+                            text: "Upload start folder…"
+                            onTriggered: {
+                                uploadStartFolderDialog.startPath = root.service ? root.service.uploadStartPath : ""
+                                uploadStartFolderDialog.open()
+                            }
+                        }
                     }
                 }
 
@@ -294,8 +309,9 @@ Item {
         property bool primary: false
         property color accentColor: Theme.accent
         hoverEnabled: true
-        implicitWidth: 76
         implicitHeight: 28
+        leftPadding: 14
+        rightPadding: 14
         contentItem: Text {
             text: dialogButton.text
             color: dialogButton.primary ? Theme.background : Theme.text
@@ -465,7 +481,11 @@ Item {
         y: Math.round(((parent ? parent.height : 0) - height) / 2)
         modal: true
         standardButtons: Dialog.NoButton
-        onOpened: picker.selectedPaths = []
+        onOpened: {
+            picker.selectedPaths = []
+            picker.startPath = root.service ? root.service.uploadStartPath : ""
+            picker.resetToStart()
+        }
         onAccepted: if (picker.selectedPaths.length > 0) dialog.confirmed(picker.selectedPaths)
 
         background: Rectangle {
@@ -536,5 +556,81 @@ Item {
                 if (name !== "") root.service.startUpload(path, name)
             }
         }
+    }
+
+    component FolderPickerDialog: Dialog {
+        id: dialog
+        property string startPath: ""
+        signal confirmed(string path)
+
+        x: Math.round(((parent ? parent.width : 0) - width) / 2)
+        y: Math.round(((parent ? parent.height : 0) - height) / 2)
+        modal: true
+        standardButtons: Dialog.NoButton
+        onOpened: { picker.startPath = dialog.startPath; picker.resetToStart() }
+        onAccepted: dialog.confirmed(picker.currentPath)
+
+        background: Rectangle {
+            implicitWidth: 320
+            color: Theme.surface
+            border.color: Theme.border
+            radius: 10
+        }
+
+        header: Item {
+            implicitHeight: headerColumn.implicitHeight + 20
+
+            ColumnLayout {
+                id: headerColumn
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    GhostButton {
+                        text: "‹"
+                        enabled: picker.canGoUp
+                        onClicked: picker.goUp()
+                    }
+
+                    Label {
+                        text: "Upload start folder"
+                        color: Theme.text
+                        font.bold: true
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: picker.currentPath
+                    color: Theme.textMuted
+                    font.pixelSize: 11
+                    elide: Text.ElideMiddle
+                }
+            }
+        }
+
+        contentItem: Components.FilePicker {
+            id: picker
+            fontFamily: root.fontFamily
+            selectFolders: true
+            implicitWidth: 300
+            implicitHeight: 280
+        }
+
+        footer: DialogFooter {
+            confirmLabel: "Select this folder"
+            onCancelClicked: dialog.reject()
+            onConfirmClicked: dialog.accept()
+        }
+    }
+
+    FolderPickerDialog {
+        id: uploadStartFolderDialog
+        onConfirmed: function (path) { if (root.service) root.service.setUploadStartPath(path) }
     }
 }

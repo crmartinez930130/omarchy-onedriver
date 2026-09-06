@@ -14,11 +14,13 @@ Item {
     readonly property bool transferActive: service ? service.transferActive : false
 
     // Settings are injected onto the bar-widget instance, not the service,
-    // so forward the one the service actually needs across to it.
+    // so forward the ones the service actually needs across to it.
     onServiceChanged: _syncSettings()
     onSettingsChanged: _syncSettings()
     function _syncSettings() {
-        if (service) service.downloadPath = (settings && settings.downloadPath) || ""
+        if (!service) return
+        service.downloadPath = (settings && settings.downloadPath) || ""
+        service.uploadStartPath = (settings && settings.uploadStartPath) || ""
     }
 
     implicitWidth: content.implicitWidth
