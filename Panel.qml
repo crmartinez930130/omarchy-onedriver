@@ -164,7 +164,7 @@ Item {
                     GhostButton {
                         text: "󰕒"
                         toolTip: "Upload"
-                        onClicked: uploadPathDialog.open()
+                        onClicked: uploadPickerDialog.open()
                     }
 
                     GhostButton {
@@ -436,15 +436,84 @@ Item {
         onConfirmed: if (root.service) root.service.deleteItem(targetId)
     }
 
-    NamePromptDialog {
-        id: uploadPathDialog
-        title: "Upload"
-        confirmLabel: "Upload"
-        placeholder: "/home/user/file.pdf"
-        onConfirmed: function (value) {
-            var path = value.trim()
-            var name = path.substring(path.lastIndexOf("/") + 1)
-            if (name !== "" && root.service) root.service.startUpload(path, name)
+    component FilePickerDialog: Dialog {
+        id: dialog
+        signal confirmed(var paths)
+
+        x: Math.round(((parent ? parent.width : 0) - width) / 2)
+        y: Math.round(((parent ? parent.height : 0) - height) / 2)
+        modal: true
+        standardButtons: Dialog.NoButton
+        onOpened: picker.selectedPaths = []
+        onAccepted: if (picker.selectedPaths.length > 0) dialog.confirmed(picker.selectedPaths)
+
+        background: Rectangle {
+            implicitWidth: 320
+            color: Theme.surface
+            border.color: Theme.border
+            radius: 10
+        }
+
+        header: Item {
+            implicitHeight: headerColumn.implicitHeight + 20
+
+            ColumnLayout {
+                id: headerColumn
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    GhostButton {
+                        text: "‹"
+                        enabled: picker.canGoUp
+                        onClicked: picker.goUp()
+                    }
+
+                    Label {
+                        text: "Upload files"
+                        color: Theme.text
+                        font.bold: true
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: picker.currentPath
+                    color: Theme.textMuted
+                    font.pixelSize: 11
+                    elide: Text.ElideMiddle
+                }
+            }
+        }
+
+        contentItem: Components.FilePicker {
+            id: picker
+            fontFamily: root.fontFamily
+            implicitWidth: 300
+            implicitHeight: 280
+        }
+
+        footer: DialogFooter {
+            confirmLabel: "Upload (" + picker.selectedPaths.length + ")"
+            onCancelClicked: dialog.reject()
+            onConfirmClicked: dialog.accept()
+        }
+    }
+
+    FilePickerDialog {
+        id: uploadPickerDialog
+        onConfirmed: function (paths) {
+            if (!root.service) return
+            for (var i = 0; i < paths.length; i++) {
+                var path = paths[i]
+                var name = path.substring(path.lastIndexOf("/") + 1)
+                if (name !== "") root.service.startUpload(path, name)
+            }
         }
     }
 }
