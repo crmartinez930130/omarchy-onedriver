@@ -19,9 +19,13 @@ class GraphClient:
 
     def _request(self, method, path):
         request = urllib.request.Request(self.base_url + path, method=method, headers={"Authorization": f"Bearer {self.access_token}"})
+        response = self._send(request)
+        return json.loads(response)
+
+    def _send(self, request):
         try:
             with self.opener(request) as response:
-                return json.loads(response.read())
+                return response.read()
         except urllib.error.HTTPError as error:
             try:
                 payload = json.loads(error.read())
@@ -65,6 +69,5 @@ class GraphClient:
     def _write(self, method, path, payload=None):
         data = json.dumps(payload).encode() if payload is not None else None
         request = urllib.request.Request(self.base_url + path, data=data, method=method, headers={"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"})
-        with self.opener(request) as response:
-            body = response.read()
-            return json.loads(body) if body else {}
+        body = self._send(request)
+        return json.loads(body) if body else {}

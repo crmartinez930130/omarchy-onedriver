@@ -1,5 +1,5 @@
 import os
-from .graph import GraphClient
+from .graph import GraphClient, GraphError
 from .ipc import serve
 from .oauth import OAuthClient
 from .tokens import TokenStore
@@ -14,6 +14,28 @@ class Helper:
         self.transfers = None
 
     def dispatch(self, method, params):
+        try:
+            return self._dispatch(method, params)
+        except GraphError as error:
+            if error.status != 401:
+                raise
+            if self._try_refresh():
+                return self._dispatch(method, params)
+            raise RuntimeError("Session expired — please sign in again") from error
+
+    def _try_refresh(self):
+        if self.tokens and self.tokens.get("refresh_token"):
+            try:
+                self.refresh()
+                return True
+            except Exception:
+                pass
+        self.store.clear()
+        self.tokens = None
+        self.transfers = None
+        return False
+
+    def _dispatch(self, method, params):
         if method == "auth.status":
             return {"signedIn": bool(self.tokens)}
         if method == "auth.logout":
