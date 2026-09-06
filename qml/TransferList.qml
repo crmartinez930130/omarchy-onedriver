@@ -18,14 +18,16 @@ ListView {
         required property string transferState
         required property real bytesCompleted
         required property real bytesTotal
+        required property string error
 
         readonly property bool cancellable: transferState === "running" || transferState === "queued"
+        readonly property bool failed: transferState === "failed"
         readonly property real fraction: bytesTotal > 0 ? Math.min(1, bytesCompleted / bytesTotal) : 0
-        readonly property color stateColor: transferState === "failed" ? Theme.error
+        readonly property color stateColor: failed ? Theme.error
             : transferState === "completed" ? Theme.success : Theme.accent
 
         width: root.width
-        height: 40
+        height: failed && error !== "" ? 56 : 40
 
         ColumnLayout {
             anchors.fill: parent
@@ -79,6 +81,15 @@ ListView {
                     radius: 1.5
                     color: Theme.accent
                 }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: row.failed && row.error !== ""
+                text: row.error
+                color: Theme.error
+                font.pixelSize: 10
+                elide: Text.ElideRight
             }
         }
     }

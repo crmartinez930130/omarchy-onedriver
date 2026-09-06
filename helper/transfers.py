@@ -1,4 +1,6 @@
+import sys
 import threading
+import traceback
 import uuid
 from pathlib import Path
 from urllib.request import Request
@@ -48,6 +50,8 @@ class TransferManager:
         except Exception as error:
             job["state"] = "cancelled" if job["cancel"].is_set() else "failed"
             job["error"] = str(error)
+            print(f"[transfer {job['id']}] {job['direction']} of {job['name']!r} failed:", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
         self._publish(job)
 
     def _download(self, job, item_id, destination):

@@ -42,7 +42,8 @@ Item {
                 name: transfer.name,
                 transferState: transfer.state,
                 bytesCompleted: transfer.bytesCompleted,
-                bytesTotal: transfer.bytesTotal
+                bytesTotal: transfer.bytesTotal,
+                error: transfer.error || ""
             })
         }
     }
