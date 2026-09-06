@@ -199,10 +199,27 @@ Item {
 
     function _pollTransfers() {
         if (!root.signedIn) return
+        var previous = root.transfers
         _call("transfer.list", {}, function (result, error) {
             if (error) return
-            root.transfers = Array.isArray(result) ? result : []
+            var next = Array.isArray(result) ? result : []
+            root.transfers = next
+            if (root._hasNewlyCompletedUpload(previous, next)) _load(root.currentFolderId, root.currentFolderName)
         })
+    }
+
+    // Uploads mutate the folder we're looking at, but only once the transfer
+    // actually finishes — refreshing when it merely starts would just reload
+    // the listing before the file exists. Fires once per transfer, the poll
+    // tick its state first reads back as "completed".
+    function _hasNewlyCompletedUpload(previous, next) {
+        for (var i = 0; i < next.length; i++) {
+            var transfer = next[i]
+            if (transfer.direction !== "upload" || transfer.state !== "completed") continue
+            var alreadyDone = previous.some(function (item) { return item.id === transfer.id && item.state === "completed" })
+            if (!alreadyDone) return true
+        }
+        return false
     }
 
     Timer {
