@@ -92,6 +92,15 @@ Item {
                 }
 
                 GhostButton {
+                    text: "⚙"
+                    toolTip: "Settings"
+                    onClicked: {
+                        settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
+                        settingsDialog.open()
+                    }
+                }
+
+                GhostButton {
                     text: "Sign out"
                     visible: root.service && root.service.signedIn
                     Layout.rightMargin: 4
@@ -329,6 +338,7 @@ Item {
         property string initialValue: ""
         property string confirmLabel: "OK"
         property string placeholder: ""
+        property bool allowEmpty: false
         signal confirmed(string value)
 
         x: Math.round(((parent ? parent.width : 0) - width) / 2)
@@ -336,7 +346,7 @@ Item {
         modal: true
         standardButtons: Dialog.NoButton
         onOpened: { field.text = initialValue; field.selectAll(); field.forceActiveFocus() }
-        onAccepted: if (field.text.trim() !== "") dialog.confirmed(field.text.trim())
+        onAccepted: if (dialog.allowEmpty || field.text.trim() !== "") dialog.confirmed(field.text.trim())
 
         background: Rectangle {
             implicitWidth: 260
@@ -412,6 +422,15 @@ Item {
             onCancelClicked: dialog.reject()
             onConfirmClicked: dialog.accept()
         }
+    }
+
+    NamePromptDialog {
+        id: settingsDialog
+        title: "Download folder"
+        confirmLabel: "Save"
+        placeholder: "~/Downloads"
+        allowEmpty: true
+        onConfirmed: function (value) { if (root.service) root.service.setDownloadPath(value) }
     }
 
     NamePromptDialog {

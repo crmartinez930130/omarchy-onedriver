@@ -59,6 +59,24 @@ Item {
         }
     }
 
+    // Applies immediately for this session, and persists to shell.json via
+    // the same CLI the settings schema is meant to be edited through, so it
+    // survives a restart and stays visible to `omarchy bar set`/list.
+    function setDownloadPath(path) {
+        root.downloadPath = path
+        if (settingsProcess.running) return
+        settingsProcess.command = ["omarchy", "bar", "set", root.moduleName, "downloadPath", path]
+        settingsProcess.running = true
+    }
+
+    Process {
+        id: settingsProcess
+        command: []
+        onExited: function (exitCode) {
+            if (exitCode !== 0) root.lastError = "Couldn't save the setting"
+        }
+    }
+
     function _call(method, params, onResult) {
         if (!helperProcess.running) start()
         var id = String(root._nextId++)
