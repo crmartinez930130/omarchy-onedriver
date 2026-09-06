@@ -94,25 +94,7 @@ Item {
                 GhostButton {
                     text: "⚙"
                     toolTip: "Settings"
-                    onClicked: settingsMenu.open()
-
-                    Menu {
-                        id: settingsMenu
-                        MenuItem {
-                            text: "Download folder…"
-                            onTriggered: {
-                                settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
-                                settingsDialog.open()
-                            }
-                        }
-                        MenuItem {
-                            text: "Upload start folder…"
-                            onTriggered: {
-                                uploadStartFolderDialog.startPath = root.service ? root.service.uploadStartPath : ""
-                                uploadStartFolderDialog.open()
-                            }
-                        }
-                    }
+                    onClicked: settingsChooser.open()
                 }
 
                 GhostButton {
@@ -330,6 +312,32 @@ Item {
         }
     }
 
+    component SettingsRow: Button {
+        id: settingsRow
+        hoverEnabled: true
+        Layout.fillWidth: true
+        implicitHeight: 36
+        leftPadding: 12
+        rightPadding: 12
+        contentItem: RowLayout {
+            Label {
+                text: settingsRow.text
+                color: Theme.text
+                font.pixelSize: 13
+                Layout.fillWidth: true
+            }
+            Label {
+                text: "›"
+                color: Theme.textDim
+                font.pixelSize: 13
+            }
+        }
+        background: Rectangle {
+            radius: 6
+            color: settingsRow.down ? Theme.border : (settingsRow.hovered ? Theme.surfaceHover : "transparent")
+        }
+    }
+
     component DialogFooter: Item {
         id: footer
         signal cancelClicked()
@@ -437,6 +445,57 @@ Item {
             confirmColor: dialog.confirmColor
             onCancelClicked: dialog.reject()
             onConfirmClicked: dialog.accept()
+        }
+    }
+
+    component SettingsChooserDialog: Dialog {
+        id: dialog
+        signal downloadFolderRequested()
+        signal uploadStartFolderRequested()
+
+        x: Math.round(((parent ? parent.width : 0) - width) / 2)
+        y: Math.round(((parent ? parent.height : 0) - height) / 2)
+        modal: true
+        standardButtons: Dialog.NoButton
+
+        background: Rectangle {
+            implicitWidth: 260
+            color: Theme.surface
+            border.color: Theme.border
+            radius: 10
+        }
+
+        header: Label {
+            text: "Settings"
+            color: Theme.text
+            font.bold: true
+            padding: 14
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 2
+
+            SettingsRow {
+                text: "Download folder"
+                onClicked: { dialog.close(); dialog.downloadFolderRequested() }
+            }
+
+            SettingsRow {
+                text: "Upload start folder"
+                onClicked: { dialog.close(); dialog.uploadStartFolderRequested() }
+            }
+        }
+    }
+
+    SettingsChooserDialog {
+        id: settingsChooser
+        onDownloadFolderRequested: {
+            settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
+            settingsDialog.open()
+        }
+        onUploadStartFolderRequested: {
+            uploadStartFolderDialog.startPath = root.service ? root.service.uploadStartPath : ""
+            uploadStartFolderDialog.open()
         }
     }
 
