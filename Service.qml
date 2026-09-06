@@ -80,9 +80,23 @@ Item {
         if (!message.ok) {
             root.lastError = (message.error && message.error.message) || "Request failed"
             if (callback) callback(null, root.lastError)
+            if (root.lastError === root._sessionExpiredMessage) root.refreshStatus()
             return
         }
         if (callback) callback(message.result, null)
+    }
+
+    // Must match the RuntimeError message main.py raises when a 401 survives
+    // its own refresh-and-retry — the signal to resync signedIn instead of
+    // just surfacing a stale-looking error.
+    readonly property string _sessionExpiredMessage: "Session expired — please sign in again"
+
+    function _clearSessionState() {
+        root.items = []
+        root.transfers = []
+        root.folderStack = []
+        root.currentFolderId = ""
+        root.currentFolderName = "OneDrive"
     }
 
     function refreshStatus() {
@@ -90,8 +104,10 @@ Item {
         _call("auth.status", {}, function (result, error) {
             root.busy = false
             if (error) return
+            var wasSignedIn = root.signedIn
             root.signedIn = !!(result && result.signedIn)
             if (root.signedIn) _resetToRoot()
+            else if (wasSignedIn) _clearSessionState()
         })
     }
 
@@ -109,11 +125,7 @@ Item {
     function logout() {
         _call("auth.logout", {}, function () {
             root.signedIn = false
-            root.items = []
-            root.transfers = []
-            root.folderStack = []
-            root.currentFolderId = ""
-            root.currentFolderName = "OneDrive"
+            root._clearSessionState()
         })
     }
 
