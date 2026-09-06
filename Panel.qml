@@ -291,8 +291,8 @@ Item {
                     text: "Download folder"
                     value: (root.service && root.service.downloadPath) ? root.service.downloadPath : "~/Downloads (default)"
                     onClicked: {
-                        settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
-                        settingsDialog.open()
+                        downloadFolderDialog.startPath = root.service ? root.service.downloadPath : ""
+                        downloadFolderDialog.open()
                     }
                 }
 
@@ -562,15 +562,6 @@ Item {
     }
 
     NamePromptDialog {
-        id: settingsDialog
-        title: "Download folder"
-        confirmLabel: "Save"
-        placeholder: "~/Downloads"
-        allowEmpty: true
-        onConfirmed: function (value) { if (root.service) root.service.setDownloadPath(value) }
-    }
-
-    NamePromptDialog {
         id: newFolderDialog
         title: "New folder"
         confirmLabel: "Create"
@@ -682,6 +673,7 @@ Item {
     component FolderPickerDialog: Dialog {
         id: dialog
         property string startPath: ""
+        property string dialogTitle: "Select folder"
         signal confirmed(string path)
 
         x: Math.round(((parent ? parent.width : 0) - width) / 2)
@@ -718,7 +710,7 @@ Item {
                     }
 
                     Label {
-                        text: "Upload start folder"
+                        text: dialog.dialogTitle
                         color: Theme.text
                         font.bold: true
                         Layout.fillWidth: true
@@ -752,6 +744,13 @@ Item {
 
     FolderPickerDialog {
         id: uploadStartFolderDialog
+        dialogTitle: "Upload start folder"
         onConfirmed: function (path) { if (root.service) root.service.setUploadStartPath(path) }
+    }
+
+    FolderPickerDialog {
+        id: downloadFolderDialog
+        dialogTitle: "Download folder"
+        onConfirmed: function (path) { if (root.service) root.service.setDownloadPath(path) }
     }
 }
