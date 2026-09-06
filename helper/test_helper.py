@@ -16,7 +16,7 @@ from tokens import TokenStore
 # imported as part of the `helper` package, not as the bare `main` the rest of
 # this file uses for ipc/tokens. Put the project root on the path for that.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from helper.graph import GraphError, _DropAuthOnRedirect
+from helper.graph import GraphClient, GraphError, _DropAuthOnRedirect
 from helper.main import Helper
 from helper.transfers import TransferManager
 
@@ -48,6 +48,34 @@ class HelperTests(unittest.TestCase):
         )
         self.assertEqual(redirected.full_url, "https://blob.example.com/file?sig=abc")
         self.assertNotIn("Authorization", redirected.headers)
+
+    def test_root_level_operations_use_the_root_path_not_an_empty_item_id(self):
+        # parent_id/item_id is "" at the drive root (there's no id for root
+        # itself). /me/drive/items/:/name:/... and /me/drive/items//children
+        # are malformed and Graph 400s on them — "root" is the path it wants.
+        opener = _RecordingOpener(json.dumps({"value": [], "uploadUrl": "https://upload.example.com/session"}).encode())
+        client = GraphClient("token", opener=opener)
+
+        client.list_children("")
+        client.create_folder("", "New folder")
+        client.create_upload_session("", "file.txt")
+
+        for url in opener.urls:
+            self.assertNotIn("items/:", url)
+            self.assertNotIn("items//", url)
+        self.assertTrue(opener.urls[0].endswith("/me/drive/root/children"))
+        self.assertTrue(opener.urls[1].endswith("/me/drive/root/children"))
+        self.assertTrue(opener.urls[2].endswith("/me/drive/root:/file.txt:/createUploadSession"))
+
+
+class _RecordingOpener:
+    def __init__(self, body):
+        self.body = body
+        self.urls = []
+
+    def __call__(self, request):
+        self.urls.append(request.full_url)
+        return io.BytesIO(self.body)
 
 
 class FakeGraphClient:

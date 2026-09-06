@@ -57,15 +57,22 @@ class GraphClient:
             raise self._graph_error(error) from error
 
     def create_upload_session(self, parent_id, name):
-        result = self._write("POST", f"/me/drive/items/{urllib.parse.quote(parent_id)}:/{urllib.parse.quote(name)}:/createUploadSession", {"item": {"@microsoft.graph.conflictBehavior": "replace"}})
+        result = self._write("POST", f"/me/drive/{self._item_ref(parent_id)}:/{urllib.parse.quote(name)}:/createUploadSession", {"item": {"@microsoft.graph.conflictBehavior": "replace"}})
         return result["uploadUrl"]
+
+    @staticmethod
+    def _item_ref(item_id):
+        # Empty/None means "the drive root" — root has no id of its own, so
+        # /me/drive/items/ with a blank id segment is malformed and Graph
+        # rejects it with a 400. "root" is the special path Graph expects there.
+        return "root" if not item_id else f"items/{urllib.parse.quote(item_id)}"
 
     @staticmethod
     def _item(item):
         return {"id": item["id"], "name": item["name"], "folder": item.get("folder"), "file": item.get("file"), "size": item.get("size", 0), "lastModifiedDateTime": item.get("lastModifiedDateTime"), "webUrl": item.get("webUrl")}
 
     def list_children(self, item_id=None):
-        path = "/me/drive/root/children" if not item_id else f"/me/drive/items/{urllib.parse.quote(item_id)}/children"
+        path = f"/me/drive/{self._item_ref(item_id)}/children"
         items = []
         while path:
             page = self._request("GET", path)
@@ -75,7 +82,7 @@ class GraphClient:
         return items
 
     def create_folder(self, parent_id, name):
-        return self._write("POST", f"/me/drive/items/{urllib.parse.quote(parent_id)}/children", {"name": name, "folder": {}})
+        return self._write("POST", f"/me/drive/{self._item_ref(parent_id)}/children", {"name": name, "folder": {}})
 
     def rename(self, item_id, name):
         return self._write("PATCH", f"/me/drive/items/{urllib.parse.quote(item_id)}", {"name": name})
