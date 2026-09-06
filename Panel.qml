@@ -326,6 +326,8 @@ Item {
         property string confirmLabel: "OK"
         signal confirmed(string value)
 
+        x: Math.round(((parent ? parent.width : 0) - width) / 2)
+        y: Math.round(((parent ? parent.height : 0) - height) / 2)
         modal: true
         standardButtons: Dialog.NoButton
         onOpened: { field.text = initialValue; field.selectAll(); field.forceActiveFocus() }
@@ -372,6 +374,8 @@ Item {
         property color confirmColor: Theme.accent
         signal confirmed()
 
+        x: Math.round(((parent ? parent.width : 0) - width) / 2)
+        y: Math.round(((parent ? parent.height : 0) - height) / 2)
         modal: true
         standardButtons: Dialog.NoButton
         onAccepted: dialog.confirmed()
