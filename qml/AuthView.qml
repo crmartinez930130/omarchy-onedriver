@@ -32,6 +32,7 @@ Column {
 
     Button {
         id: signInButton
+        hoverEnabled: true
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Sign in"
         onClicked: loginRequested()
@@ -48,7 +49,8 @@ Column {
             radius: 8
             implicitWidth: 110
             implicitHeight: 34
-            color: signInButton.down ? Qt.darker(Theme.accent, 1.15) : Theme.accent
+            color: signInButton.down ? Qt.darker(Theme.accent, 1.3)
+                : (signInButton.hovered ? Qt.darker(Theme.accent, 1.15) : Theme.accent)
         }
     }
 }

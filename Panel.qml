@@ -87,8 +87,8 @@ Item {
 
                 BusyIndicator {
                     running: root.service ? root.service.busy : false
-                    implicitWidth: 18
-                    implicitHeight: 18
+                    implicitWidth: 28
+                    implicitHeight: 28
                 }
 
                 GhostButton {
@@ -262,6 +262,7 @@ Item {
     component GhostButton: Button {
         id: ghostButton
         property string toolTip: ""
+        hoverEnabled: true
         implicitHeight: 26
         leftPadding: 8
         rightPadding: 8
@@ -275,7 +276,7 @@ Item {
         }
         background: Rectangle {
             radius: 6
-            color: ghostButton.down ? Theme.surfaceHover : "transparent"
+            color: ghostButton.down ? Theme.border : (ghostButton.hovered ? Theme.surfaceHover : "transparent")
         }
     }
 
@@ -283,6 +284,7 @@ Item {
         id: dialogButton
         property bool primary: false
         property color accentColor: Theme.accent
+        hoverEnabled: true
         implicitWidth: 76
         implicitHeight: 28
         contentItem: Text {
@@ -298,8 +300,8 @@ Item {
             border.width: dialogButton.primary ? 0 : 1
             border.color: Theme.border
             color: dialogButton.primary
-                ? (dialogButton.down ? Qt.darker(dialogButton.accentColor, 1.15) : dialogButton.accentColor)
-                : (dialogButton.down ? Theme.surfaceHover : "transparent")
+                ? (dialogButton.down ? Qt.darker(dialogButton.accentColor, 1.3) : (dialogButton.hovered ? Qt.darker(dialogButton.accentColor, 1.15) : dialogButton.accentColor))
+                : (dialogButton.down ? Theme.border : (dialogButton.hovered ? Theme.surfaceHover : "transparent"))
         }
     }
 

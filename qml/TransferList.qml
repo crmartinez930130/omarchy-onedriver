@@ -53,10 +53,15 @@ ListView {
                 }
 
                 ToolButton {
+                    id: cancelButton
                     visible: row.cancellable
+                    hoverEnabled: true
                     implicitWidth: 20
                     implicitHeight: 20
-                    background: Item {}
+                    background: Rectangle {
+                        radius: 5
+                        color: cancelButton.down ? Theme.border : (cancelButton.hovered ? Theme.surfaceHover : "transparent")
+                    }
                     contentItem: Text {
                         text: "✕"
                         color: Theme.textMuted

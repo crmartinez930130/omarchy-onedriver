@@ -34,7 +34,7 @@ ListView {
 
         background: Rectangle {
             radius: 6
-            color: row.hovered ? Theme.surfaceHover : "transparent"
+            color: row.down ? Theme.border : (row.hovered ? Theme.surfaceHover : "transparent")
         }
 
         contentItem: RowLayout {
@@ -70,10 +70,15 @@ ListView {
             }
 
             ToolButton {
+                id: menuButton
+                hoverEnabled: true
                 implicitWidth: 26
                 implicitHeight: 26
                 Layout.alignment: Qt.AlignVCenter
-                background: Item {}
+                background: Rectangle {
+                    radius: 6
+                    color: menuButton.down ? Theme.border : (menuButton.hovered ? Theme.surfaceHover : "transparent")
+                }
                 contentItem: Text {
                     text: "⋮"
                     color: Theme.textMuted

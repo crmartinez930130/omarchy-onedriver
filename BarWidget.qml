@@ -94,5 +94,10 @@ Item {
             anchors.fill: parent
             service: root.service
         }
+
+        Shortcut {
+            sequence: "Escape"
+            onActivated: panelWindow.visible = false
+        }
     }
 }

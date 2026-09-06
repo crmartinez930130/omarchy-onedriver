@@ -67,7 +67,7 @@ ListView {
 
         background: Rectangle {
             radius: 6
-            color: delegate.hovered ? Theme.surfaceHover : "transparent"
+            color: delegate.down ? Theme.border : (delegate.hovered ? Theme.surfaceHover : "transparent")
         }
 
         contentItem: RowLayout {
