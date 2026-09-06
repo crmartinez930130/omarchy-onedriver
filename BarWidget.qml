@@ -46,6 +46,7 @@ Item {
         implicitHeight: 480
         visible: false
         color: "transparent"
+        grabFocus: true
 
         anchor {
             id: popupAnchor
