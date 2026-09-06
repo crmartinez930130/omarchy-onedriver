@@ -84,12 +84,27 @@ Item {
                     onClicked: root.showSettings = false
                 }
 
-                Label {
-                    text: root.showSettings ? "Settings" : "OneDrive"
-                    color: Theme.text
-                    font.bold: true
-                    font.pixelSize: 20
+                ColumnLayout {
                     Layout.fillWidth: true
+                    spacing: 0
+
+                    Label {
+                        text: root.showSettings ? "Settings" : "OneDrive"
+                        color: Theme.text
+                        font.bold: true
+                        font.pixelSize: 20
+                        Layout.fillWidth: true
+                    }
+
+                    Label {
+                        readonly property string account: root.service ? (root.service.accountEmail || root.service.accountName) : ""
+                        text: account
+                        visible: !root.showSettings && root.service && root.service.signedIn && account !== ""
+                        color: Theme.textDim
+                        font.pixelSize: 10
+                        elide: Text.ElideMiddle
+                        Layout.fillWidth: true
+                    }
                 }
 
                 BusyIndicator {

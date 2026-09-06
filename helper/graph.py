@@ -56,6 +56,11 @@ class GraphClient:
         except urllib.error.HTTPError as error:
             raise self._graph_error(error) from error
 
+    def me(self):
+        profile = self._request("GET", "/me")
+        return {"displayName": profile.get("displayName"),
+                "email": profile.get("mail") or profile.get("userPrincipalName")}
+
     def create_upload_session(self, parent_id, name):
         result = self._write("POST", f"/me/drive/{self._item_ref(parent_id)}:/{urllib.parse.quote(name)}:/createUploadSession", {"item": {"@microsoft.graph.conflictBehavior": "replace"}})
         return result["uploadUrl"]

@@ -19,6 +19,8 @@ Item {
     property string downloadPath: ""
     property string uploadStartPath: ""
     property string barSection: "right"
+    property string accountName: ""
+    property string accountEmail: ""
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -146,6 +148,8 @@ Item {
         root.folderStack = []
         root.currentFolderId = ""
         root.currentFolderName = "OneDrive"
+        root.accountName = ""
+        root.accountEmail = ""
     }
 
     function refreshStatus() {
@@ -181,6 +185,15 @@ Item {
     function _resetToRoot() {
         root.folderStack = []
         _load("", "OneDrive")
+        _loadAccount()
+    }
+
+    function _loadAccount() {
+        _call("auth.me", {}, function (result, error) {
+            if (error) return
+            root.accountName = (result && result.displayName) || ""
+            root.accountEmail = (result && result.email) || ""
+        })
     }
 
     function openFolder(itemId, name) {
