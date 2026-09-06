@@ -1,4 +1,5 @@
 import os
+import urllib.request
 from .graph import GraphClient, GraphError
 from .ipc import serve
 from .oauth import OAuthClient
@@ -73,7 +74,7 @@ class Helper:
         if not self.tokens:
             raise RuntimeError("Not authenticated")
         if self.transfers is None:
-            self.transfers = TransferManager(GraphClient(self.tokens["access_token"]), self._event, __import__("urllib.request", fromlist=["urlopen"]).urlopen)
+            self.transfers = TransferManager(GraphClient(self.tokens["access_token"]), self._event, urllib.request.urlopen, on_unauthorized=self._try_refresh)
         return self.transfers
 
     def _event(self, event, payload):

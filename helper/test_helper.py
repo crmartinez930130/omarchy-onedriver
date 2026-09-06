@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -16,6 +17,7 @@ from tokens import TokenStore
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from helper.graph import GraphError
 from helper.main import Helper
+from helper.transfers import TransferManager
 
 
 class HelperTests(unittest.TestCase):
@@ -82,6 +84,62 @@ class HelperRefreshTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.helper.dispatch("drive.list", {})
         self.assertIsNone(self.helper.tokens)
+
+
+class FakeDownloadResponse:
+    def __init__(self, data):
+        self.data = data
+        self.headers = {"Content-Length": str(len(data))}
+        self._sent = False
+
+    def read(self, size=None):
+        if self._sent:
+            return b""
+        self._sent = True
+        return self.data
+
+
+class FakeTransferGraph:
+    def __init__(self):
+        self.access_token = "expired-token"
+        self.download_calls = 0
+
+    def download_request(self, item_id):
+        self.download_calls += 1
+        if self.access_token == "expired-token":
+            raise GraphError(401, "InvalidAuthenticationToken")
+        return FakeDownloadResponse(b"hello")
+
+
+def _make_job():
+    return {"id": "t1", "direction": "download", "name": "downloaded.txt",
+            "bytesCompleted": 0, "bytesTotal": 0, "state": "running",
+            "error": None, "cancel": threading.Event()}
+
+
+class TransferManagerRefreshTests(unittest.TestCase):
+    def test_download_refreshes_expired_token_and_retries(self):
+        graph = FakeTransferGraph()
+
+        def on_unauthorized():
+            graph.access_token = "fresh-token"
+            return True
+
+        manager = TransferManager(graph, emit=lambda *args: None, opener=None, on_unauthorized=on_unauthorized)
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "downloaded.txt"
+            manager._download(_make_job(), "item-1", destination)
+            self.assertEqual(destination.read_bytes(), b"hello")
+        self.assertEqual(graph.download_calls, 2)
+
+    def test_download_without_a_working_refresh_raises(self):
+        graph = FakeTransferGraph()
+        manager = TransferManager(graph, emit=lambda *args: None, opener=None, on_unauthorized=lambda: False)
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "downloaded.txt"
+            with self.assertRaises(GraphError):
+                manager._download(_make_job(), "item-1", destination)
+        self.assertEqual(graph.download_calls, 1)
 
 
 if __name__ == "__main__":

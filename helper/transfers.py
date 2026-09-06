@@ -5,12 +5,15 @@ import uuid
 from pathlib import Path
 from urllib.request import Request
 
+from .graph import GraphError
+
 
 class TransferManager:
-    def __init__(self, graph, emit, opener):
+    def __init__(self, graph, emit, opener, on_unauthorized=None):
         self.graph = graph
         self.emit = emit
         self.opener = opener
+        self.on_unauthorized = on_unauthorized
         self.jobs = {}
         self.lock = threading.Lock()
 
@@ -54,8 +57,16 @@ class TransferManager:
             traceback.print_exc(file=sys.stderr)
         self._publish(job)
 
+    def _opening_call(self, call):
+        try:
+            return call()
+        except GraphError as error:
+            if error.status == 401 and self.on_unauthorized and self.on_unauthorized():
+                return call()
+            raise
+
     def _download(self, job, item_id, destination):
-        response = self.graph.download_request(item_id)
+        response = self._opening_call(lambda: self.graph.download_request(item_id))
         total = int(response.headers.get("Content-Length", 0))
         job["bytesTotal"] = total
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -73,7 +84,7 @@ class TransferManager:
     def _upload(self, job, parent_id, source, name):
         size = source.stat().st_size
         job["bytesTotal"] = size
-        session = self.graph.create_upload_session(parent_id, name)
+        session = self._opening_call(lambda: self.graph.create_upload_session(parent_id, name))
         offset = 0
         with source.open("rb") as source_file:
             while offset < size:

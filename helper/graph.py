@@ -27,16 +27,23 @@ class GraphClient:
             with self.opener(request) as response:
                 return response.read()
         except urllib.error.HTTPError as error:
-            try:
-                payload = json.loads(error.read())
-                message = payload.get("error", {}).get("message", "Graph request failed")
-            except (ValueError, AttributeError):
-                message = "Graph request failed"
-            raise GraphError(error.code, message) from error
+            raise self._graph_error(error) from error
+
+    @staticmethod
+    def _graph_error(error):
+        try:
+            payload = json.loads(error.read())
+            message = payload.get("error", {}).get("message", "Graph request failed")
+        except (ValueError, AttributeError):
+            message = "Graph request failed"
+        return GraphError(error.code, message)
 
     def download_request(self, item_id):
         request = urllib.request.Request(self.base_url + f"/me/drive/items/{urllib.parse.quote(item_id)}/content", headers={"Authorization": f"Bearer {self.access_token}"})
-        return self.opener(request)
+        try:
+            return self.opener(request)
+        except urllib.error.HTTPError as error:
+            raise self._graph_error(error) from error
 
     def create_upload_session(self, parent_id, name):
         result = self._write("POST", f"/me/drive/items/{urllib.parse.quote(parent_id)}:/{urllib.parse.quote(name)}:/createUploadSession", {"item": {"@microsoft.graph.conflictBehavior": "replace"}})
