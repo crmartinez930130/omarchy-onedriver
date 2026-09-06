@@ -5,6 +5,7 @@ import sys
 import tempfile
 import threading
 import unittest
+import urllib.request
 from pathlib import Path
 from unittest.mock import patch
 
@@ -15,7 +16,7 @@ from tokens import TokenStore
 # imported as part of the `helper` package, not as the bare `main` the rest of
 # this file uses for ipc/tokens. Put the project root on the path for that.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from helper.graph import GraphError
+from helper.graph import GraphError, _DropAuthOnRedirect
 from helper.main import Helper
 from helper.transfers import TransferManager
 
@@ -33,6 +34,20 @@ class HelperTests(unittest.TestCase):
             store.save({"access_token": "secret"})
             self.assertEqual(store.load()["access_token"], "secret")
             self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_redirect_handler_drops_the_bearer_token(self):
+        # Graph's /content redirects to a different host for the actual file
+        # bytes; urllib's default redirect handling would otherwise carry our
+        # Authorization header over to that host, which rejects it with a 401.
+        original = urllib.request.Request(
+            "https://graph.microsoft.com/v1.0/me/drive/items/x/content",
+            headers={"Authorization": "Bearer secret"},
+        )
+        redirected = _DropAuthOnRedirect().redirect_request(
+            original, None, 302, "Found", {}, "https://blob.example.com/file?sig=abc"
+        )
+        self.assertEqual(redirected.full_url, "https://blob.example.com/file?sig=abc")
+        self.assertNotIn("Authorization", redirected.headers)
 
 
 class FakeGraphClient:

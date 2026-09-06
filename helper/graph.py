@@ -10,6 +10,17 @@ class GraphError(Exception):
         self.status = status
 
 
+class _DropAuthOnRedirect(urllib.request.HTTPRedirectHandler):
+    # Graph's /content endpoint 302s to a pre-authenticated, host-specific
+    # download URL. urllib's default redirect handling carries the original
+    # request's headers over to that new host, including our Graph bearer
+    # token, which the redirect target doesn't expect and rejects with its
+    # own 401. Rebuild a bare request instead so nothing but the URL crosses
+    # the hop.
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return urllib.request.Request(newurl)
+
+
 class GraphClient:
     base_url = "https://graph.microsoft.com/v1.0"
 
@@ -41,7 +52,7 @@ class GraphClient:
     def download_request(self, item_id):
         request = urllib.request.Request(self.base_url + f"/me/drive/items/{urllib.parse.quote(item_id)}/content", headers={"Authorization": f"Bearer {self.access_token}"})
         try:
-            return self.opener(request)
+            return urllib.request.build_opener(_DropAuthOnRedirect).open(request)
         except urllib.error.HTTPError as error:
             raise self._graph_error(error) from error
 
