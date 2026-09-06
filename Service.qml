@@ -18,6 +18,7 @@ Item {
     property string fontFamily: "monospace"
     property string downloadPath: ""
     property string uploadStartPath: ""
+    property string barSection: "right"
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -73,6 +74,17 @@ Item {
         _persistSetting("uploadStartPath", path)
     }
 
+    // Stored both as our own schema value (so it shows back as "current" the
+    // next time Settings opens) and as an actual `bar move`, which is what
+    // relocates the icon — the schema field alone wouldn't move anything.
+    function setBarSection(section) {
+        root.barSection = section
+        _persistSetting("position", section)
+        if (moveProcess.running) return
+        moveProcess.command = ["omarchy", "bar", "move", root.moduleName, "--section", section]
+        moveProcess.running = true
+    }
+
     function _persistSetting(key, value) {
         if (settingsProcess.running) return
         settingsProcess.command = ["omarchy", "bar", "set", root.moduleName, key, value]
@@ -84,6 +96,14 @@ Item {
         command: []
         onExited: function (exitCode) {
             if (exitCode !== 0) root.lastError = "Couldn't save the setting"
+        }
+    }
+
+    Process {
+        id: moveProcess
+        command: []
+        onExited: function (exitCode) {
+            if (exitCode !== 0) root.lastError = "Couldn't move the widget"
         }
     }
 

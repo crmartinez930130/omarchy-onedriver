@@ -18,7 +18,8 @@
     "defaultSection": "right",
     "defaults": {
       "downloadPath": "",
-      "uploadStartPath": ""
+      "uploadStartPath": "",
+      "position": "right"
     },
     "schema": [
       {
@@ -34,6 +35,14 @@
         "label": "Upload start folder",
         "defaultValue": "",
         "description": "Local folder the upload file browser opens to. Leave empty to start at your home folder."
+      },
+      {
+        "key": "position",
+        "type": "enum",
+        "label": "Bar position",
+        "options": ["left", "center", "right"],
+        "defaultValue": "right",
+        "description": "Which section of the bar this widget appears in."
       }
     ]
   }

@@ -10,6 +10,7 @@ Item {
 
     property string moduleName: "crmartinez.onedrive"
     property var service: null
+    property bool showSettings: false
     readonly property string fontFamily: service ? service.fontFamily : "monospace"
 
     implicitWidth: 380
@@ -77,8 +78,14 @@ Item {
                 Layout.fillWidth: true
                 spacing: 8
 
+                GhostButton {
+                    text: "‹"
+                    visible: root.showSettings
+                    onClicked: root.showSettings = false
+                }
+
                 Label {
-                    text: "OneDrive"
+                    text: root.showSettings ? "Settings" : "OneDrive"
                     color: Theme.text
                     font.bold: true
                     font.pixelSize: 20
@@ -86,6 +93,7 @@ Item {
                 }
 
                 BusyIndicator {
+                    visible: !root.showSettings
                     running: root.service ? root.service.busy : false
                     implicitWidth: 28
                     implicitHeight: 28
@@ -94,173 +102,240 @@ Item {
                 GhostButton {
                     text: "⚙"
                     toolTip: "Settings"
-                    onClicked: settingsChooser.open()
+                    visible: !root.showSettings
+                    onClicked: root.showSettings = true
                 }
 
                 GhostButton {
                     text: "Sign out"
-                    visible: root.service && root.service.signedIn
+                    visible: !root.showSettings && root.service && root.service.signedIn
                     Layout.rightMargin: 4
                     onClicked: root.service.logout()
                 }
             }
 
-            Rectangle {
-                Layout.fillWidth: true
-                visible: root.service && root.service.lastError !== ""
-                radius: 6
-                color: Qt.rgba(0.95, 0.55, 0.66, 0.12)
-                implicitHeight: errorLabel.implicitHeight + 12
-
-                Label {
-                    id: errorLabel
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    text: root.service ? root.service.lastError : ""
-                    color: Theme.error
-                    wrapMode: Text.WordWrap
-                    font.pixelSize: 11
-                }
-            }
-
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                visible: !(root.service && root.service.signedIn)
-
-                Components.AuthView {
-                    anchors.centerIn: parent
-                    fontFamily: root.fontFamily
-                    onLoginRequested: if (root.service) root.service.login()
-                }
-            }
-
             ColumnLayout {
+                id: mainScreen
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: root.service && root.service.signedIn
-                spacing: 8
+                visible: !root.showSettings
+                spacing: 10
 
-                RowLayout {
+                Rectangle {
                     Layout.fillWidth: true
-                    spacing: 4
-
-                    GhostButton {
-                        text: "‹"
-                        enabled: root.service && root.service.folderStack.length > 0
-                        onClicked: root.service.goBack()
-                    }
+                    visible: root.service && root.service.lastError !== ""
+                    radius: 6
+                    color: Qt.rgba(0.95, 0.55, 0.66, 0.12)
+                    implicitHeight: errorLabel.implicitHeight + 12
 
                     Label {
-                        text: root.service ? root.service.currentFolderName : ""
-                        color: Theme.textMuted
-                        elide: Text.ElideMiddle
-                        Layout.fillWidth: true
-                    }
-
-                    GhostButton {
-                        text: "󰉗"
-                        toolTip: "New folder"
-                        onClicked: {
-                            newFolderDialog.initialValue = ""
-                            newFolderDialog.open()
-                        }
-                    }
-
-                    GhostButton {
-                        text: "󰕒"
-                        toolTip: "Upload"
-                        onClicked: uploadPickerDialog.open()
-                    }
-
-                    GhostButton {
-                        text: "⟳"
-                        toolTip: "Refresh"
-                        onClicked: if (root.service) root.service.refresh()
+                        id: errorLabel
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        text: root.service ? root.service.lastError : ""
+                        color: Theme.error
+                        wrapMode: Text.WordWrap
+                        font.pixelSize: 11
                     }
                 }
 
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    visible: !(root.service && root.service.signedIn)
 
-                    Components.DriveList {
-                        anchors.fill: parent
+                    Components.AuthView {
+                        anchors.centerIn: parent
                         fontFamily: root.fontFamily
-                        model: itemsModel
-                        onFolderRequested: function (itemId, name) { root.service.openFolder(itemId, name) }
-                        onFileRequested: function (itemId, name) { root.service.startDownload(itemId, name) }
-                        onRenameRequested: function (itemId, name) {
-                            renameDialog.targetId = itemId
-                            renameDialog.initialValue = name
-                            renameDialog.open()
+                        onLoginRequested: if (root.service) root.service.login()
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: root.service && root.service.signedIn
+                    spacing: 8
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        GhostButton {
+                            text: "‹"
+                            enabled: root.service && root.service.folderStack.length > 0
+                            onClicked: root.service.goBack()
                         }
-                        onDeleteRequested: function (itemId, name) {
-                            deleteConfirm.targetId = itemId
-                            deleteConfirm.message = "Delete “" + name + "”? This can't be undone."
-                            deleteConfirm.open()
+
+                        Label {
+                            text: root.service ? root.service.currentFolderName : ""
+                            color: Theme.textMuted
+                            elide: Text.ElideMiddle
+                            Layout.fillWidth: true
                         }
+
+                        GhostButton {
+                            text: "󰉗"
+                            toolTip: "New folder"
+                            onClicked: {
+                                newFolderDialog.initialValue = ""
+                                newFolderDialog.open()
+                            }
+                        }
+
+                        GhostButton {
+                            text: "󰕒"
+                            toolTip: "Upload"
+                            onClicked: uploadPickerDialog.open()
+                        }
+
+                        GhostButton {
+                            text: "⟳"
+                            toolTip: "Refresh"
+                            onClicked: if (root.service) root.service.refresh()
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        Components.DriveList {
+                            anchors.fill: parent
+                            fontFamily: root.fontFamily
+                            model: itemsModel
+                            onFolderRequested: function (itemId, name) { root.service.openFolder(itemId, name) }
+                            onFileRequested: function (itemId, name) { root.service.startDownload(itemId, name) }
+                            onRenameRequested: function (itemId, name) {
+                                renameDialog.targetId = itemId
+                                renameDialog.initialValue = name
+                                renameDialog.open()
+                            }
+                            onDeleteRequested: function (itemId, name) {
+                                deleteConfirm.targetId = itemId
+                                deleteConfirm.message = "Delete “" + name + "”? This can't be undone."
+                                deleteConfirm.open()
+                            }
+                        }
+
+                        Label {
+                            anchors.centerIn: parent
+                            visible: itemsModel.count === 0 && !(root.service && root.service.busy)
+                            text: "This folder is empty."
+                            color: Theme.textDim
+                            font.pixelSize: 12
+                        }
+
+                        DropArea {
+                            id: uploadDropArea
+                            anchors.fill: parent
+                            onEntered: function (drag) { drag.accepted = drag.hasUrls }
+                            onDropped: function (drop) {
+                                for (var i = 0; i < drop.urls.length; i++) {
+                                    var path = root._urlToPath(drop.urls[i])
+                                    var name = path.substring(path.lastIndexOf("/") + 1)
+                                    if (name !== "" && root.service) root.service.startUpload(path, name)
+                                }
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                visible: uploadDropArea.containsDrag
+                                radius: 8
+                                color: Qt.rgba(0.537, 0.706, 0.980, 0.14)
+                                border.color: Theme.accent
+                                border.width: 2
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    text: "Drop to upload"
+                                    color: Theme.accent
+                                    font.pixelSize: 13
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        visible: transfersModel.count > 0
+                        color: Theme.border
                     }
 
                     Label {
-                        anchors.centerIn: parent
-                        visible: itemsModel.count === 0 && !(root.service && root.service.busy)
-                        text: "This folder is empty."
+                        visible: transfersModel.count > 0
+                        text: "Transfers"
                         color: Theme.textDim
-                        font.pixelSize: 12
+                        font.pixelSize: 11
                     }
 
-                    DropArea {
-                        id: uploadDropArea
-                        anchors.fill: parent
-                        onEntered: function (drag) { drag.accepted = drag.hasUrls }
-                        onDropped: function (drop) {
-                            for (var i = 0; i < drop.urls.length; i++) {
-                                var path = root._urlToPath(drop.urls[i])
-                                var name = path.substring(path.lastIndexOf("/") + 1)
-                                if (name !== "" && root.service) root.service.startUpload(path, name)
-                            }
-                        }
+                    Components.TransferList {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.min(140, transfersModel.count * 44)
+                        visible: transfersModel.count > 0
+                        model: transfersModel
+                        onCancelRequested: function (transferId) { root.service.cancelTransfer(transferId) }
+                    }
+                }
+            }
 
-                        Rectangle {
-                            anchors.fill: parent
-                            visible: uploadDropArea.containsDrag
-                            radius: 8
-                            color: Qt.rgba(0.537, 0.706, 0.980, 0.14)
-                            border.color: Theme.accent
-                            border.width: 2
+            ColumnLayout {
+                id: settingsScreen
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: root.showSettings
+                spacing: 4
 
-                            Label {
-                                anchors.centerIn: parent
-                                text: "Drop to upload"
-                                color: Theme.accent
-                                font.pixelSize: 13
-                            }
-                        }
+                SettingsRow {
+                    text: "Download folder"
+                    value: (root.service && root.service.downloadPath) ? root.service.downloadPath : "~/Downloads (default)"
+                    onClicked: {
+                        settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
+                        settingsDialog.open()
                     }
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    visible: transfersModel.count > 0
-                    color: Theme.border
+                SettingsRow {
+                    text: "Upload start folder"
+                    value: (root.service && root.service.uploadStartPath) ? root.service.uploadStartPath : "Home folder (default)"
+                    onClicked: {
+                        uploadStartFolderDialog.startPath = root.service ? root.service.uploadStartPath : ""
+                        uploadStartFolderDialog.open()
+                    }
                 }
 
                 Label {
-                    visible: transfersModel.count > 0
-                    text: "Transfers"
+                    text: "Bar position"
                     color: Theme.textDim
                     font.pixelSize: 11
+                    Layout.topMargin: 10
                 }
 
-                Components.TransferList {
+                RowLayout {
+                    id: positionRow
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(140, transfersModel.count * 44)
-                    visible: transfersModel.count > 0
-                    model: transfersModel
-                    onCancelRequested: function (transferId) { root.service.cancelTransfer(transferId) }
+                    spacing: 6
+                    readonly property string current: (root.service && root.service.barSection) ? root.service.barSection : "right"
+
+                    PositionOption {
+                        text: "Left"
+                        selected: positionRow.current === "left"
+                        onClicked: if (root.service) root.service.setBarSection("left")
+                    }
+                    PositionOption {
+                        text: "Center"
+                        selected: positionRow.current === "center"
+                        onClicked: if (root.service) root.service.setBarSection("center")
+                    }
+                    PositionOption {
+                        text: "Right"
+                        selected: positionRow.current === "right"
+                        onClicked: if (root.service) root.service.setBarSection("right")
+                    }
                 }
+
+                Item { Layout.fillHeight: true }
             }
         }
     }
@@ -314,17 +389,32 @@ Item {
 
     component SettingsRow: Button {
         id: settingsRow
+        property string value: ""
         hoverEnabled: true
         Layout.fillWidth: true
-        implicitHeight: 36
+        implicitHeight: 44
         leftPadding: 12
         rightPadding: 12
         contentItem: RowLayout {
-            Label {
-                text: settingsRow.text
-                color: Theme.text
-                font.pixelSize: 13
+            ColumnLayout {
+                spacing: 1
                 Layout.fillWidth: true
+
+                Label {
+                    text: settingsRow.text
+                    color: Theme.text
+                    font.pixelSize: 13
+                    Layout.fillWidth: true
+                }
+
+                Label {
+                    text: settingsRow.value
+                    visible: settingsRow.value !== ""
+                    color: Theme.textDim
+                    font.pixelSize: 11
+                    elide: Text.ElideMiddle
+                    Layout.fillWidth: true
+                }
             }
             Label {
                 text: "›"
@@ -335,6 +425,29 @@ Item {
         background: Rectangle {
             radius: 6
             color: settingsRow.down ? Theme.border : (settingsRow.hovered ? Theme.surfaceHover : "transparent")
+        }
+    }
+
+    component PositionOption: Button {
+        id: option
+        property bool selected: false
+        hoverEnabled: true
+        Layout.fillWidth: true
+        implicitHeight: 30
+        contentItem: Text {
+            text: option.text
+            color: option.selected ? Theme.background : Theme.text
+            font.pixelSize: 12
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        background: Rectangle {
+            radius: 6
+            border.width: option.selected ? 0 : 1
+            border.color: Theme.border
+            color: option.selected
+                ? (option.down ? Qt.darker(Theme.accent, 1.3) : (option.hovered ? Qt.darker(Theme.accent, 1.15) : Theme.accent))
+                : (option.down ? Theme.border : (option.hovered ? Theme.surfaceHover : "transparent"))
         }
     }
 
@@ -445,57 +558,6 @@ Item {
             confirmColor: dialog.confirmColor
             onCancelClicked: dialog.reject()
             onConfirmClicked: dialog.accept()
-        }
-    }
-
-    component SettingsChooserDialog: Dialog {
-        id: dialog
-        signal downloadFolderRequested()
-        signal uploadStartFolderRequested()
-
-        x: Math.round(((parent ? parent.width : 0) - width) / 2)
-        y: Math.round(((parent ? parent.height : 0) - height) / 2)
-        modal: true
-        standardButtons: Dialog.NoButton
-
-        background: Rectangle {
-            implicitWidth: 260
-            color: Theme.surface
-            border.color: Theme.border
-            radius: 10
-        }
-
-        header: Label {
-            text: "Settings"
-            color: Theme.text
-            font.bold: true
-            padding: 14
-        }
-
-        contentItem: ColumnLayout {
-            spacing: 2
-
-            SettingsRow {
-                text: "Download folder"
-                onClicked: { dialog.close(); dialog.downloadFolderRequested() }
-            }
-
-            SettingsRow {
-                text: "Upload start folder"
-                onClicked: { dialog.close(); dialog.uploadStartFolderRequested() }
-            }
-        }
-    }
-
-    SettingsChooserDialog {
-        id: settingsChooser
-        onDownloadFolderRequested: {
-            settingsDialog.initialValue = root.service ? root.service.downloadPath : ""
-            settingsDialog.open()
-        }
-        onUploadStartFolderRequested: {
-            uploadStartFolderDialog.startPath = root.service ? root.service.uploadStartPath : ""
-            uploadStartFolderDialog.open()
         }
     }
 
