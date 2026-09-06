@@ -16,6 +16,7 @@ Item {
     property bool busy: false
     property string lastError: ""
     property string fontFamily: "monospace"
+    property string downloadPath: ""
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -163,7 +164,8 @@ Item {
     }
 
     function startDownload(itemId, name) {
-        var destination = Quickshell.env("HOME") + "/Downloads/" + name
+        var baseDir = root.downloadPath !== "" ? root.downloadPath : Quickshell.env("HOME") + "/Downloads"
+        var destination = baseDir + "/" + name
         _call("transfer.download", {itemId: itemId, destination: destination, name: name}, function (result, error) {
             if (!error) _pollTransfers()
         })

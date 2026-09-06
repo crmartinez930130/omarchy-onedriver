@@ -15,6 +15,18 @@
     "displayName": "OneDrive",
     "category": "Cloud storage",
     "allowMultiple": false,
-    "defaultSection": "right"
+    "defaultSection": "right",
+    "defaults": {
+      "downloadPath": ""
+    },
+    "schema": [
+      {
+        "key": "downloadPath",
+        "type": "path",
+        "label": "Download folder",
+        "defaultValue": "",
+        "description": "Where files are saved when you click one to download. Leave empty to use ~/Downloads."
+      }
+    ]
   }
 }

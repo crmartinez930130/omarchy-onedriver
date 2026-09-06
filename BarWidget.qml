@@ -7,10 +7,19 @@ Item {
 
     property string moduleName: "crmartinez.onedrive"
     property var bar: null
+    property var settings: ({})
 
     readonly property var service: bar && bar.shell ? bar.shell.serviceFor(root.moduleName) : null
     readonly property bool signedIn: service ? service.signedIn : false
     readonly property bool transferActive: service ? service.transferActive : false
+
+    // Settings are injected onto the bar-widget instance, not the service,
+    // so forward the one the service actually needs across to it.
+    onServiceChanged: _syncSettings()
+    onSettingsChanged: _syncSettings()
+    function _syncSettings() {
+        if (service) service.downloadPath = (settings && settings.downloadPath) || ""
+    }
 
     implicitWidth: content.implicitWidth
     // The bar loads third-party widgets through a Loader whose own slot
