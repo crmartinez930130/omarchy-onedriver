@@ -94,6 +94,7 @@ Item {
                 GhostButton {
                     text: "Sign out"
                     visible: root.service && root.service.signedIn
+                    Layout.rightMargin: 4
                     onClicked: root.service.logout()
                 }
             }
@@ -261,8 +262,9 @@ Item {
     component GhostButton: Button {
         id: ghostButton
         property string toolTip: ""
-        implicitWidth: 30
         implicitHeight: 26
+        leftPadding: 8
+        rightPadding: 8
         contentItem: Text {
             text: ghostButton.text
             color: ghostButton.enabled ? Theme.textMuted : Theme.textDim
