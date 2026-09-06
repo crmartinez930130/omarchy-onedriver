@@ -7,6 +7,7 @@ import "../Theme.js" as Theme
 ListView {
     id: root
     signal cancelRequested(string transferId)
+    signal dismissRequested(string transferId)
     clip: true
     spacing: 4
     boundsBehavior: Flickable.StopAtBounds
@@ -21,6 +22,7 @@ ListView {
         required property string error
 
         readonly property bool cancellable: transferState === "running" || transferState === "queued"
+        readonly property bool dismissible: transferState === "completed" || transferState === "cancelled" || transferState === "failed"
         readonly property bool failed: transferState === "failed"
         readonly property real fraction: bytesTotal > 0 ? Math.min(1, bytesCompleted / bytesTotal) : 0
         readonly property color stateColor: failed ? Theme.error
@@ -54,7 +56,7 @@ ListView {
 
                 ToolButton {
                     id: cancelButton
-                    visible: row.cancellable
+                    visible: row.cancellable || row.dismissible
                     hoverEnabled: true
                     implicitWidth: 20
                     implicitHeight: 20
@@ -69,7 +71,7 @@ ListView {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
-                    onClicked: root.cancelRequested(row.transferId)
+                    onClicked: row.cancellable ? root.cancelRequested(row.transferId) : root.dismissRequested(row.transferId)
                 }
             }
 

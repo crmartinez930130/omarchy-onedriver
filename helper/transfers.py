@@ -1,11 +1,15 @@
 import sys
 import threading
+import time
 import traceback
 import uuid
 from pathlib import Path
 from urllib.request import Request
 
 from .graph import GraphError
+
+RETENTION_SECONDS = 3600
+_TERMINAL_STATES = ("completed", "cancelled", "failed")
 
 
 class TransferManager:
@@ -30,15 +34,33 @@ class TransferManager:
         job["cancel"].set()
         return {"cancelled": True}
 
+    def dismiss(self, transfer_id):
+        with self.lock:
+            job = self.jobs.get(transfer_id)
+            if not job:
+                raise ValueError("Unknown transfer")
+            if job["state"] not in _TERMINAL_STATES:
+                raise ValueError("Transfer still in progress")
+            del self.jobs[transfer_id]
+        return {"dismissed": True}
+
     def list(self):
         with self.lock:
+            self._purge_expired()
             return [self._public(job) for job in self.jobs.values()]
+
+    def _purge_expired(self):
+        now = time.monotonic()
+        expired = [transfer_id for transfer_id, job in self.jobs.items()
+                   if job["state"] in _TERMINAL_STATES and now - job["finishedAt"] > RETENTION_SECONDS]
+        for transfer_id in expired:
+            del self.jobs[transfer_id]
 
     def _start(self, direction, name, work):
         transfer_id = uuid.uuid4().hex
         job = {"id": transfer_id, "direction": direction, "name": name,
                "bytesCompleted": 0, "bytesTotal": 0, "state": "queued",
-               "error": None, "cancel": threading.Event()}
+               "error": None, "finishedAt": None, "cancel": threading.Event()}
         with self.lock:
             self.jobs[transfer_id] = job
         threading.Thread(target=self._run, args=(job, work), daemon=True).start()
@@ -55,6 +77,7 @@ class TransferManager:
             job["error"] = str(error)
             print(f"[transfer {job['id']}] {job['direction']} of {job['name']!r} failed:", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
+        job["finishedAt"] = time.monotonic()
         self._publish(job)
 
     def _opening_call(self, call):
@@ -105,4 +128,4 @@ class TransferManager:
 
     @staticmethod
     def _public(job):
-        return {key: value for key, value in job.items() if key != "cancel"}
+        return {key: value for key, value in job.items() if key not in ("cancel", "finishedAt")}

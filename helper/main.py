@@ -57,6 +57,8 @@ class Helper:
             return self._manager().list()
         if method == "transfer.cancel":
             return self._manager().cancel(params["transferId"])
+        if method == "transfer.dismiss":
+            return self._manager().dismiss(params["transferId"])
         if method == "transfer.download":
             return self._manager().start_download(params["itemId"], params["destination"], params["name"])
         if method == "transfer.upload":

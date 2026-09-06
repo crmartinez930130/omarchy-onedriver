@@ -276,6 +276,7 @@ Item {
                         visible: transfersModel.count > 0
                         model: transfersModel
                         onCancelRequested: function (transferId) { root.service.cancelTransfer(transferId) }
+                        onDismissRequested: function (transferId) { root.service.dismissTransfer(transferId) }
                     }
                 }
             }

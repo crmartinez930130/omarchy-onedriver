@@ -229,6 +229,10 @@ Item {
         _call("transfer.cancel", {transferId: transferId}, function () { _pollTransfers() })
     }
 
+    function dismissTransfer(transferId) {
+        _call("transfer.dismiss", {transferId: transferId}, function () { _pollTransfers() })
+    }
+
     function createFolder(name) {
         _call("drive.mkdir", {parentId: root.currentFolderId, name: name}, function (result, error) {
             if (!error) refresh()

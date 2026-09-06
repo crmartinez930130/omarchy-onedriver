@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import threading
+import time
 import unittest
 import urllib.request
 from pathlib import Path
@@ -157,7 +158,7 @@ class FakeTransferGraph:
 def _make_job():
     return {"id": "t1", "direction": "download", "name": "downloaded.txt",
             "bytesCompleted": 0, "bytesTotal": 0, "state": "running",
-            "error": None, "cancel": threading.Event()}
+            "error": None, "finishedAt": None, "cancel": threading.Event()}
 
 
 class TransferManagerRefreshTests(unittest.TestCase):
@@ -183,6 +184,50 @@ class TransferManagerRefreshTests(unittest.TestCase):
             with self.assertRaises(GraphError):
                 manager._download(_make_job(), "item-1", destination)
         self.assertEqual(graph.download_calls, 1)
+
+
+class TransferManagerLifecycleTests(unittest.TestCase):
+    def _manager(self):
+        return TransferManager(graph=None, emit=lambda *args: None, opener=None)
+
+    def test_dismiss_removes_a_finished_transfer(self):
+        manager = self._manager()
+        job = _make_job()
+        job["state"] = "completed"
+        job["finishedAt"] = time.monotonic()
+        manager.jobs["t1"] = job
+        manager.dismiss("t1")
+        self.assertEqual(manager.list(), [])
+
+    def test_dismiss_refuses_a_transfer_still_in_progress(self):
+        manager = self._manager()
+        manager.jobs["t1"] = _make_job()
+        with self.assertRaises(ValueError):
+            manager.dismiss("t1")
+        self.assertEqual(len(manager.list()), 1)
+
+    def test_dismiss_refuses_an_unknown_transfer(self):
+        manager = self._manager()
+        with self.assertRaises(ValueError):
+            manager.dismiss("missing")
+
+    def test_list_purges_transfers_finished_over_an_hour_ago(self):
+        manager = self._manager()
+        job = _make_job()
+        job["state"] = "completed"
+        job["finishedAt"] = time.monotonic() - 3700
+        manager.jobs["t1"] = job
+        self.assertEqual(manager.list(), [])
+
+    def test_list_keeps_recently_finished_transfers(self):
+        manager = self._manager()
+        job = _make_job()
+        job["state"] = "completed"
+        job["finishedAt"] = time.monotonic() - 10
+        manager.jobs["t1"] = job
+        result = manager.list()
+        self.assertEqual(len(result), 1)
+        self.assertNotIn("finishedAt", result[0])
 
 
 if __name__ == "__main__":
