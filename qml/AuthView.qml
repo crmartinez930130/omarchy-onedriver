@@ -5,6 +5,9 @@ import "../Theme.js" as Theme
 Column {
     id: root
     property string fontFamily: "monospace"
+    property string title: "Connect your OneDrive account"
+    property string subtitle: "Personal Microsoft accounts only"
+    property string signInLabel: "Sign in"
     signal loginRequested()
     spacing: 14
 
@@ -18,14 +21,14 @@ Column {
 
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Connect your OneDrive account"
+        text: root.title
         color: Theme.text
         font.pixelSize: 14
     }
 
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Personal Microsoft accounts only"
+        text: root.subtitle
         color: Theme.textDim
         font.pixelSize: 11
     }
@@ -34,7 +37,9 @@ Column {
         id: signInButton
         hoverEnabled: true
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "Sign in"
+        text: root.signInLabel
+        leftPadding: 20
+        rightPadding: 20
         onClicked: loginRequested()
 
         contentItem: Text {
@@ -47,7 +52,6 @@ Column {
         }
         background: Rectangle {
             radius: 8
-            implicitWidth: 110
             implicitHeight: 34
             color: signInButton.down ? Qt.darker(Theme.accent, 1.3)
                 : (signInButton.hovered ? Qt.darker(Theme.accent, 1.15) : Theme.accent)

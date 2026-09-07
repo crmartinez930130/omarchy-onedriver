@@ -19,7 +19,8 @@
     "defaults": {
       "downloadPath": "",
       "uploadStartPath": "",
-      "position": "right"
+      "position": "right",
+      "language": "en"
     },
     "schema": [
       {
@@ -43,6 +44,14 @@
         "options": ["left", "center", "right"],
         "defaultValue": "right",
         "description": "Which section of the bar this widget appears in."
+      },
+      {
+        "key": "language",
+        "type": "enum",
+        "label": "Language",
+        "options": ["en", "es"],
+        "defaultValue": "en",
+        "description": "Interface language for the panel."
       }
     ]
   }

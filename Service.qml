@@ -21,6 +21,7 @@ Item {
     property string barSection: "right"
     property string accountName: ""
     property string accountEmail: ""
+    property string language: "en"
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -85,6 +86,11 @@ Item {
         if (moveProcess.running) return
         moveProcess.command = ["omarchy", "bar", "move", root.moduleName, "--section", section]
         moveProcess.running = true
+    }
+
+    function setLanguage(lang) {
+        root.language = lang
+        _persistSetting("language", lang)
     }
 
     function _persistSetting(key, value) {

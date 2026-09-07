@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "qml" as Components
 import "Theme.js" as Theme
+import "Strings.js" as Strings
 
 Item {
     id: root
@@ -12,6 +13,9 @@ Item {
     property var service: null
     property bool showSettings: false
     readonly property string fontFamily: service ? service.fontFamily : "monospace"
+    readonly property string language: service ? service.language : "en"
+
+    function tr(key) { return Strings.t(root.language, key) }
 
     implicitWidth: 380
     implicitHeight: 480
@@ -89,7 +93,7 @@ Item {
                     spacing: 0
 
                     Label {
-                        text: root.showSettings ? "Settings" : "OneDrive"
+                        text: root.showSettings ? root.tr("settingsTitle") : "OneDrive"
                         color: Theme.text
                         font.bold: true
                         font.pixelSize: 20
@@ -116,13 +120,13 @@ Item {
 
                 GhostButton {
                     text: "⚙"
-                    toolTip: "Settings"
+                    toolTip: root.tr("settingsToolTip")
                     visible: !root.showSettings
                     onClicked: root.showSettings = true
                 }
 
                 GhostButton {
-                    text: "Sign out"
+                    text: root.tr("signOut")
                     visible: !root.showSettings && root.service && root.service.signedIn
                     Layout.rightMargin: 4
                     onClicked: root.service.logout()
@@ -162,6 +166,9 @@ Item {
                     Components.AuthView {
                         anchors.centerIn: parent
                         fontFamily: root.fontFamily
+                        title: root.tr("connectAccount")
+                        subtitle: root.tr("personalAccountsOnly")
+                        signInLabel: root.tr("signIn")
                         onLoginRequested: if (root.service) root.service.login()
                     }
                 }
@@ -191,7 +198,7 @@ Item {
 
                         GhostButton {
                             text: "󰉗"
-                            toolTip: "New folder"
+                            toolTip: root.tr("newFolderToolTip")
                             onClicked: {
                                 newFolderDialog.initialValue = ""
                                 newFolderDialog.open()
@@ -200,13 +207,13 @@ Item {
 
                         GhostButton {
                             text: "󰕒"
-                            toolTip: "Upload"
+                            toolTip: root.tr("uploadToolTip")
                             onClicked: uploadPickerDialog.open()
                         }
 
                         GhostButton {
                             text: "⟳"
-                            toolTip: "Refresh"
+                            toolTip: root.tr("refreshToolTip")
                             onClicked: if (root.service) root.service.refresh()
                         }
                     }
@@ -218,6 +225,8 @@ Item {
                         Components.DriveList {
                             anchors.fill: parent
                             fontFamily: root.fontFamily
+                            renameLabel: root.tr("rename")
+                            deleteLabel: root.tr("deleteAction")
                             model: itemsModel
                             onFolderRequested: function (itemId, name) { root.service.openFolder(itemId, name) }
                             onFileRequested: function (itemId, name) { root.service.startDownload(itemId, name) }
@@ -228,7 +237,7 @@ Item {
                             }
                             onDeleteRequested: function (itemId, name) {
                                 deleteConfirm.targetId = itemId
-                                deleteConfirm.message = "Delete “" + name + "”? This can't be undone."
+                                deleteConfirm.message = Strings.deleteConfirmMessage(root.language, name)
                                 deleteConfirm.open()
                             }
                         }
@@ -236,7 +245,7 @@ Item {
                         Label {
                             anchors.centerIn: parent
                             visible: itemsModel.count === 0 && !(root.service && root.service.busy)
-                            text: "This folder is empty."
+                            text: root.tr("emptyFolder")
                             color: Theme.textDim
                             font.pixelSize: 12
                         }
@@ -263,7 +272,7 @@ Item {
 
                                 Label {
                                     anchors.centerIn: parent
-                                    text: "Drop to upload"
+                                    text: root.tr("dropToUpload")
                                     color: Theme.accent
                                     font.pixelSize: 13
                                 }
@@ -280,7 +289,7 @@ Item {
 
                     Label {
                         visible: transfersModel.count > 0
-                        text: "Transfers"
+                        text: root.tr("transfersLabel")
                         color: Theme.textDim
                         font.pixelSize: 11
                     }
@@ -304,8 +313,8 @@ Item {
                 spacing: 4
 
                 SettingsRow {
-                    text: "Download folder"
-                    value: (root.service && root.service.downloadPath) ? root.service.downloadPath : "~/Downloads (default)"
+                    text: root.tr("downloadFolder")
+                    value: (root.service && root.service.downloadPath) ? root.service.downloadPath : root.tr("downloadDefault")
                     onClicked: {
                         downloadFolderDialog.startPath = root.service ? root.service.downloadPath : ""
                         downloadFolderDialog.open()
@@ -313,8 +322,8 @@ Item {
                 }
 
                 SettingsRow {
-                    text: "Upload start folder"
-                    value: (root.service && root.service.uploadStartPath) ? root.service.uploadStartPath : "Home folder (default)"
+                    text: root.tr("uploadStartFolder")
+                    value: (root.service && root.service.uploadStartPath) ? root.service.uploadStartPath : root.tr("uploadStartDefault")
                     onClicked: {
                         uploadStartFolderDialog.startPath = root.service ? root.service.uploadStartPath : ""
                         uploadStartFolderDialog.open()
@@ -322,7 +331,7 @@ Item {
                 }
 
                 Label {
-                    text: "Bar position"
+                    text: root.tr("barPosition")
                     color: Theme.textDim
                     font.pixelSize: 11
                     Layout.topMargin: 10
@@ -335,19 +344,43 @@ Item {
                     readonly property string current: (root.service && root.service.barSection) ? root.service.barSection : "right"
 
                     PositionOption {
-                        text: "Left"
+                        text: root.tr("positionLeft")
                         selected: positionRow.current === "left"
                         onClicked: if (root.service) root.service.setBarSection("left")
                     }
                     PositionOption {
-                        text: "Center"
+                        text: root.tr("positionCenter")
                         selected: positionRow.current === "center"
                         onClicked: if (root.service) root.service.setBarSection("center")
                     }
                     PositionOption {
-                        text: "Right"
+                        text: root.tr("positionRight")
                         selected: positionRow.current === "right"
                         onClicked: if (root.service) root.service.setBarSection("right")
+                    }
+                }
+
+                Label {
+                    text: root.tr("languageLabel")
+                    color: Theme.textDim
+                    font.pixelSize: 11
+                    Layout.topMargin: 10
+                }
+
+                RowLayout {
+                    id: languageRow
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    PositionOption {
+                        text: "English"
+                        selected: root.language === "en"
+                        onClicked: if (root.service) root.service.setLanguage("en")
+                    }
+                    PositionOption {
+                        text: "Español"
+                        selected: root.language === "es"
+                        onClicked: if (root.service) root.service.setLanguage("es")
                     }
                 }
 
@@ -481,7 +514,7 @@ Item {
             anchors.margins: 12
             spacing: 8
             Item { Layout.fillWidth: true }
-            DialogButton { text: "Cancel"; onClicked: footer.cancelClicked() }
+            DialogButton { text: root.tr("cancel"); onClicked: footer.cancelClicked() }
             DialogButton { text: footer.confirmLabel; primary: true; accentColor: footer.confirmColor; onClicked: footer.confirmClicked() }
         }
     }
@@ -579,23 +612,23 @@ Item {
 
     NamePromptDialog {
         id: newFolderDialog
-        title: "New folder"
-        confirmLabel: "Create"
+        title: root.tr("newFolderTitle")
+        confirmLabel: root.tr("create")
         onConfirmed: function (value) { if (root.service) root.service.createFolder(value) }
     }
 
     NamePromptDialog {
         id: renameDialog
-        title: "Rename"
-        confirmLabel: "Rename"
+        title: root.tr("rename")
+        confirmLabel: root.tr("rename")
         property string targetId: ""
         onConfirmed: function (value) { if (root.service) root.service.renameItem(targetId, value) }
     }
 
     ConfirmDialog {
         id: deleteConfirm
-        title: "Delete item"
-        confirmLabel: "Delete"
+        title: root.tr("deleteItemTitle")
+        confirmLabel: root.tr("deleteAction")
         confirmColor: Theme.error
         property string targetId: ""
         onConfirmed: if (root.service) root.service.deleteItem(targetId)
@@ -643,7 +676,7 @@ Item {
                     }
 
                     Label {
-                        text: "Upload files"
+                        text: root.tr("uploadFilesTitle")
                         color: Theme.text
                         font.bold: true
                         Layout.fillWidth: true
@@ -668,7 +701,7 @@ Item {
         }
 
         footer: DialogFooter {
-            confirmLabel: "Upload (" + picker.selectedPaths.length + ")"
+            confirmLabel: Strings.uploadCountLabel(root.language, picker.selectedPaths.length)
             onCancelClicked: dialog.reject()
             onConfirmClicked: dialog.accept()
         }
@@ -752,7 +785,7 @@ Item {
         }
 
         footer: DialogFooter {
-            confirmLabel: "Select this folder"
+            confirmLabel: root.tr("selectThisFolder")
             onCancelClicked: dialog.reject()
             onConfirmClicked: dialog.accept()
         }
@@ -760,13 +793,13 @@ Item {
 
     FolderPickerDialog {
         id: uploadStartFolderDialog
-        dialogTitle: "Upload start folder"
+        dialogTitle: root.tr("uploadStartFolder")
         onConfirmed: function (path) { if (root.service) root.service.setUploadStartPath(path) }
     }
 
     FolderPickerDialog {
         id: downloadFolderDialog
-        dialogTitle: "Download folder"
+        dialogTitle: root.tr("downloadFolder")
         onConfirmed: function (path) { if (root.service) root.service.setDownloadPath(path) }
     }
 }

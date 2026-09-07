@@ -8,6 +8,8 @@ import "../Theme.js" as Theme
 ListView {
     id: root
     property string fontFamily: "monospace"
+    property string renameLabel: "Rename"
+    property string deleteLabel: "Delete"
     signal folderRequested(string itemId, string name)
     signal fileRequested(string itemId, string name)
     signal renameRequested(string itemId, string name)
@@ -90,6 +92,8 @@ ListView {
 
                 ActionMenu {
                     id: rowMenu
+                    renameLabel: root.renameLabel
+                    deleteLabel: root.deleteLabel
                     onRenameRequested: root.renameRequested(row.itemId, row.name)
                     onDeleteRequested: root.deleteRequested(row.itemId, row.name)
                 }

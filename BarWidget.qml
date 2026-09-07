@@ -22,6 +22,7 @@ Item {
         service.downloadPath = (settings && settings.downloadPath) || ""
         service.uploadStartPath = (settings && settings.uploadStartPath) || ""
         service.barSection = (settings && settings.position) || "right"
+        service.language = (settings && settings.language) || "en"
     }
 
     implicitWidth: content.implicitWidth
