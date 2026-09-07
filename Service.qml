@@ -117,8 +117,13 @@ Item {
         _persistTrackedFolders()
     }
 
+    // No --json here: this field's schema type is "string" and BarWidget
+    // parses it back with JSON.parse itself. Passing --json instead asks
+    // `omarchy bar set` to store a native structure — which not only breaks
+    // that string contract but was observed to unwrap a single-entry array
+    // into a bare object, silently corrupting the list.
     function _persistTrackedFolders() {
-        _persistSetting("trackedFolders", JSON.stringify(root.trackedFolders), true)
+        _persistSetting("trackedFolders", JSON.stringify(root.trackedFolders))
     }
 
     // Tells the helper's background FolderSync what to watch. Fires whenever
