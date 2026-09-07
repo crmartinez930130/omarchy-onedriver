@@ -100,13 +100,14 @@ Click the ⚙ button in the panel to open Settings:
   to. Defaults to your home folder.
 - **Bar position** — left, center, or right section of the bar.
 - **Language** — English or Español.
-- **Tracked folder** + **Auto-upload** — pick a local folder and turn the
-  toggle on to have new or changed files inside it uploaded automatically to
-  a same-named folder at the root of your OneDrive (subfolders included).
-  This is one-way: it never downloads anything back, and deleting a file
-  locally does not delete it from OneDrive. Files are picked up on a scan
-  that runs roughly every 30 seconds while the plugin is running, and show
-  up in the normal Transfers list like any other upload.
+- **Tracked folders** — add any number of local folders with the **+**
+  button; each has its own on/off toggle. New or changed files inside an
+  enabled folder are uploaded automatically to a same-named folder at the
+  root of your OneDrive (subfolders included). This is one-way: it never
+  downloads anything back, and deleting a file locally does not delete it
+  from OneDrive. Files are picked up on a scan that runs roughly every 30
+  seconds per folder while the plugin is running, and show up in the normal
+  Transfers list like any other upload.
 
 ## Development
 
