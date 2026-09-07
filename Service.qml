@@ -22,11 +22,9 @@ Item {
     property string accountName: ""
     property string accountEmail: ""
     property string language: "en"
-    property string trackedFolder: ""
-    property bool trackedFolderEnabled: false
+    property var trackedFolders: []  // [{path: string, enabled: bool}, ...]
 
-    onTrackedFolderChanged: _pushSyncConfig()
-    onTrackedFolderEnabledChanged: _pushSyncConfig()
+    onTrackedFoldersChanged: _pushSyncConfig()
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -98,23 +96,38 @@ Item {
         _persistSetting("language", lang)
     }
 
-    function setTrackedFolder(path) {
-        root.trackedFolder = path
-        _persistSetting("trackedFolder", path)
+    function addTrackedFolder(path) {
+        if (!path) return
+        for (var i = 0; i < root.trackedFolders.length; i++) {
+            if (root.trackedFolders[i].path === path) return
+        }
+        root.trackedFolders = root.trackedFolders.concat([{path: path, enabled: true}])
+        _persistTrackedFolders()
     }
 
-    function setTrackedFolderEnabled(enabled) {
-        root.trackedFolderEnabled = enabled
-        _persistSetting("trackedFolderEnabled", enabled ? "true" : "false", true)
+    function removeTrackedFolder(path) {
+        root.trackedFolders = root.trackedFolders.filter(function (entry) { return entry.path !== path })
+        _persistTrackedFolders()
+    }
+
+    function setTrackedFolderEnabled(path, enabled) {
+        root.trackedFolders = root.trackedFolders.map(function (entry) {
+            return entry.path === path ? {path: entry.path, enabled: enabled} : entry
+        })
+        _persistTrackedFolders()
+    }
+
+    function _persistTrackedFolders() {
+        _persistSetting("trackedFolders", JSON.stringify(root.trackedFolders), true)
     }
 
     // Tells the helper's background FolderSync what to watch. Fires whenever
-    // either half of the config changes, including the settings-injection
-    // pass on shell/plugin restart (see BarWidget._syncSettings) — not just
+    // the list changes, including the settings-injection pass on
+    // shell/plugin restart (see BarWidget._syncSettings) — not just
     // user-initiated changes — since the helper is a fresh process each time
     // and starts out not watching anything.
     function _pushSyncConfig() {
-        _call("sync.configure", {localPath: root.trackedFolder, enabled: root.trackedFolderEnabled}, null, true)
+        _call("sync.configure", {folders: root.trackedFolders}, null, true)
     }
 
     function _persistSetting(key, value, asJson) {

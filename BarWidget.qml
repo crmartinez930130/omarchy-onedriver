@@ -23,8 +23,17 @@ Item {
         service.uploadStartPath = (settings && settings.uploadStartPath) || ""
         service.barSection = (settings && settings.position) || "right"
         service.language = (settings && settings.language) || "en"
-        service.trackedFolder = (settings && settings.trackedFolder) || ""
-        service.trackedFolderEnabled = !!(settings && settings.trackedFolderEnabled)
+        service.trackedFolders = _parseTrackedFolders(settings && settings.trackedFolders)
+    }
+
+    function _parseTrackedFolders(raw) {
+        if (!raw) return []
+        try {
+            var parsed = JSON.parse(raw)
+            return Array.isArray(parsed) ? parsed : []
+        } catch (error) {
+            return []
+        }
     }
 
     implicitWidth: content.implicitWidth

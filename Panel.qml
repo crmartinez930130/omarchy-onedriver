@@ -22,6 +22,7 @@ Item {
 
     ListModel { id: itemsModel }
     ListModel { id: transfersModel }
+    ListModel { id: trackedFoldersModel }
 
     function _syncItems() {
         itemsModel.clear()
@@ -53,18 +54,27 @@ Item {
         }
     }
 
+    function _syncTrackedFolders() {
+        trackedFoldersModel.clear()
+        var list = service ? service.trackedFolders : []
+        for (var i = 0; i < list.length; i++) {
+            trackedFoldersModel.append({path: list[i].path, trackedEnabled: !!list[i].enabled})
+        }
+    }
+
     function _urlToPath(fileUrl) {
         var text = String(fileUrl)
         if (text.indexOf("file://") === 0) text = text.substring(7)
         return decodeURIComponent(text)
     }
 
-    onServiceChanged: { _syncItems(); _syncTransfers() }
+    onServiceChanged: { _syncItems(); _syncTransfers(); _syncTrackedFolders() }
 
     Connections {
         target: root.service
         function onItemsChanged() { root._syncItems() }
         function onTransfersChanged() { root._syncTransfers() }
+        function onTrackedFoldersChanged() { root._syncTrackedFolders() }
     }
 
     Rectangle {
@@ -384,32 +394,37 @@ Item {
                     }
                 }
 
-                SettingsRow {
-                    Layout.topMargin: 10
-                    text: root.tr("trackedFolder")
-                    value: (root.service && root.service.trackedFolder) ? root.service.trackedFolder : root.tr("trackedFolderDefault")
-                    onClicked: {
-                        trackedFolderDialog.startPath = root.service ? root.service.trackedFolder : ""
-                        trackedFolderDialog.open()
-                    }
-                }
-
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.topMargin: 4
+                    Layout.topMargin: 10
 
                     Label {
-                        text: root.tr("autoUpload")
-                        color: Theme.text
-                        font.pixelSize: 13
+                        text: root.tr("trackedFolders")
+                        color: Theme.textDim
+                        font.pixelSize: 11
                         Layout.fillWidth: true
                     }
 
-                    ToggleSwitch {
-                        checked: root.service ? root.service.trackedFolderEnabled : false
-                        enabled: root.service && root.service.trackedFolder !== ""
-                        onToggled: if (root.service) root.service.setTrackedFolderEnabled(checked)
+                    GhostButton {
+                        text: "+"
+                        toolTip: root.tr("addTrackedFolder")
+                        onClicked: {
+                            trackedFolderDialog.startPath = ""
+                            trackedFolderDialog.open()
+                        }
                     }
+                }
+
+                Label {
+                    visible: trackedFoldersModel.count === 0
+                    text: root.tr("noTrackedFolders")
+                    color: Theme.textDim
+                    font.pixelSize: 11
+                }
+
+                Repeater {
+                    model: trackedFoldersModel
+                    delegate: TrackedFolderRow {}
                 }
 
                 Item { Layout.fillHeight: true }
@@ -553,6 +568,33 @@ Item {
             }
         }
         contentItem: Item {}
+    }
+
+    component TrackedFolderRow: RowLayout {
+        id: trackedRow
+        required property string path
+        required property bool trackedEnabled
+
+        Layout.fillWidth: true
+        spacing: 8
+
+        Label {
+            text: trackedRow.path
+            color: Theme.text
+            font.pixelSize: 12
+            elide: Text.ElideMiddle
+            Layout.fillWidth: true
+        }
+
+        ToggleSwitch {
+            checked: trackedRow.trackedEnabled
+            onToggled: if (root.service) root.service.setTrackedFolderEnabled(trackedRow.path, checked)
+        }
+
+        GhostButton {
+            text: "✕"
+            onClicked: if (root.service) root.service.removeTrackedFolder(trackedRow.path)
+        }
     }
 
     component DialogFooter: Item {
@@ -860,7 +902,7 @@ Item {
 
     FolderPickerDialog {
         id: trackedFolderDialog
-        dialogTitle: root.tr("trackedFolder")
-        onConfirmed: function (path) { if (root.service) root.service.setTrackedFolder(path) }
+        dialogTitle: root.tr("trackedFolders")
+        onConfirmed: function (path) { if (root.service) root.service.addTrackedFolder(path) }
     }
 }

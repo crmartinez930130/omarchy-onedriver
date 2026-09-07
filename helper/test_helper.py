@@ -287,7 +287,7 @@ class FolderSyncTests(unittest.TestCase):
             manager = FakeSyncManager()
             graph = FakeSyncGraph()
             syncer = self._syncer(manager, graph, state_dir)
-            syncer.configure(str(root), True)
+            syncer.configure([{"path": str(root), "enabled": True}])
             syncer._scan_once()
 
             names = sorted(name for (_parent, _source, name) in manager.uploads)
@@ -306,7 +306,7 @@ class FolderSyncTests(unittest.TestCase):
 
             manager = FakeSyncManager()
             syncer = self._syncer(manager, FakeSyncGraph(), state_dir)
-            syncer.configure(str(root), True)
+            syncer.configure([{"path": str(root), "enabled": True}])
             syncer._scan_once()
             self.assertEqual(len(manager.uploads), 1)
 
@@ -322,13 +322,13 @@ class FolderSyncTests(unittest.TestCase):
 
             manager = FakeSyncManager(final_state="failed")
             syncer = self._syncer(manager, FakeSyncGraph(), state_dir)
-            syncer.configure(str(root), True)
+            syncer.configure([{"path": str(root), "enabled": True}])
             syncer._scan_once()
             manager.uploads.clear()
             syncer._scan_once()
             self.assertEqual(len(manager.uploads), 1)
 
-    def test_disabled_or_unset_path_does_nothing(self):
+    def test_disabled_or_empty_list_does_nothing(self):
         with tempfile.TemporaryDirectory() as local_dir, tempfile.TemporaryDirectory() as state_dir:
             root = Path(local_dir) / "Sync"
             root.mkdir()
@@ -336,13 +336,65 @@ class FolderSyncTests(unittest.TestCase):
 
             manager = FakeSyncManager()
             syncer = self._syncer(manager, FakeSyncGraph(), state_dir)
-            syncer.configure(str(root), False)
+            syncer.configure([{"path": str(root), "enabled": False}])
             syncer._scan_once()
             self.assertEqual(manager.uploads, [])
 
-            syncer.configure("", True)
+            syncer.configure([])
             syncer._scan_once()
             self.assertEqual(manager.uploads, [])
+
+    def test_scans_multiple_folders_independently(self):
+        with tempfile.TemporaryDirectory() as local_dir, tempfile.TemporaryDirectory() as state_dir:
+            first = Path(local_dir) / "First"
+            second = Path(local_dir) / "Second"
+            first.mkdir()
+            second.mkdir()
+            (first / "a.txt").write_text("a")
+            (second / "b.txt").write_text("b")
+
+            manager = FakeSyncManager()
+            graph = FakeSyncGraph()
+            syncer = self._syncer(manager, graph, state_dir)
+            syncer.configure([
+                {"path": str(first), "enabled": True},
+                {"path": str(second), "enabled": True},
+            ])
+            syncer._scan_once()
+
+            names = sorted(name for (_parent, _source, name) in manager.uploads)
+            self.assertEqual(names, ["a.txt", "b.txt"])
+            first_parent = next(p for p, _s, n in manager.uploads if n == "a.txt")
+            second_parent = next(p for p, _s, n in manager.uploads if n == "b.txt")
+            self.assertNotEqual(first_parent, second_parent)
+
+    def test_only_enabled_folders_in_a_mixed_list_are_scanned(self):
+        with tempfile.TemporaryDirectory() as local_dir, tempfile.TemporaryDirectory() as state_dir:
+            on_dir = Path(local_dir) / "On"
+            off_dir = Path(local_dir) / "Off"
+            on_dir.mkdir()
+            off_dir.mkdir()
+            (on_dir / "a.txt").write_text("a")
+            (off_dir / "b.txt").write_text("b")
+
+            manager = FakeSyncManager()
+            syncer = self._syncer(manager, FakeSyncGraph(), state_dir)
+            syncer.configure([
+                {"path": str(on_dir), "enabled": True},
+                {"path": str(off_dir), "enabled": False},
+            ])
+            syncer._scan_once()
+
+            names = [name for (_parent, _source, name) in manager.uploads]
+            self.assertEqual(names, ["a.txt"])
+
+    def test_configure_drops_duplicate_paths(self):
+        syncer = self._syncer(FakeSyncManager(), FakeSyncGraph(), tempfile.mkdtemp())
+        syncer.configure([
+            {"path": "/same", "enabled": False},
+            {"path": "/same", "enabled": True},
+        ])
+        self.assertEqual(syncer.folders, [{"path": "/same", "enabled": False}])
 
 
 if __name__ == "__main__":

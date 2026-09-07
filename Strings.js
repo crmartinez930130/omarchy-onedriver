@@ -31,9 +31,9 @@ var translations = {
         connectAccount: "Connect your OneDrive account",
         personalAccountsOnly: "Personal Microsoft accounts only",
         signIn: "Sign in",
-        trackedFolder: "Tracked folder",
-        trackedFolderDefault: "Not set",
-        autoUpload: "Auto-upload"
+        trackedFolders: "Tracked folders",
+        addTrackedFolder: "Add folder",
+        noTrackedFolders: "No folders tracked yet."
     },
     es: {
         settingsTitle: "Ajustes",
@@ -65,9 +65,9 @@ var translations = {
         connectAccount: "Conectá tu cuenta de OneDrive",
         personalAccountsOnly: "Solo cuentas personales de Microsoft",
         signIn: "Iniciar sesión",
-        trackedFolder: "Carpeta trackeada",
-        trackedFolderDefault: "Sin configurar",
-        autoUpload: "Subida automática"
+        trackedFolders: "Carpetas trackeadas",
+        addTrackedFolder: "Agregar carpeta",
+        noTrackedFolders: "Todavía no hay carpetas trackeadas."
     }
 }
 

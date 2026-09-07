@@ -69,7 +69,7 @@ class Helper:
         if method == "transfer.upload":
             return self._manager().start_upload(params["parentId"], params["source"], params["name"])
         if method == "sync.configure":
-            self.sync.configure(params.get("localPath", ""), bool(params.get("enabled")))
+            self.sync.configure(params.get("folders", []))
             return {"configured": True}
         if method == "auth.login":
             return self.login()

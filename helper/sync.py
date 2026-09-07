@@ -40,28 +40,33 @@ class SyncStateStore:
 
 
 class FolderSync:
-    # Watches one local folder and uploads anything new or changed into a
-    # same-named mirror folder at the OneDrive root, preserving the local
-    # subfolder structure. One-way (local -> cloud) only: local deletions
-    # never remove the cloud copy, and nothing is ever downloaded back.
+    # Watches any number of local folders and uploads anything new or changed
+    # in each into a same-named mirror folder at the OneDrive root,
+    # preserving the local subfolder structure. One-way (local -> cloud)
+    # only: local deletions never remove the cloud copy, and nothing is ever
+    # downloaded back.
     def __init__(self, get_manager, get_graph, state_store, scan_interval=SCAN_INTERVAL_SECONDS):
         self.get_manager = get_manager
         self.get_graph = get_graph
         self.state_store = state_store
         self.scan_interval = scan_interval
-        self.local_path = ""
-        self.enabled = False
-        self._folder_cache = {}
+        self.folders = []  # [{"path": str, "enabled": bool}, ...]
+        self._folder_caches = {}  # local_path -> {segments: remote_id}
         self._config_lock = threading.Lock()
         self._thread = None
 
-    def configure(self, local_path, enabled):
-        local_path = local_path or ""
+    def configure(self, folders):
+        normalized = []
+        seen = set()
+        for entry in folders or []:
+            path = str((entry or {}).get("path") or "").strip()
+            if not path or path in seen:
+                continue
+            seen.add(path)
+            normalized.append({"path": path, "enabled": bool(entry.get("enabled"))})
         with self._config_lock:
-            if local_path != self.local_path:
-                self._folder_cache = {}
-            self.local_path = local_path
-            self.enabled = bool(enabled) and local_path != ""
+            self.folders = normalized
+            self._folder_caches = {path: cache for path, cache in self._folder_caches.items() if path in seen}
 
     def start(self):
         # Runs once for the life of the helper process — separate from
@@ -82,11 +87,9 @@ class FolderSync:
 
     def _scan_once(self):
         with self._config_lock:
-            local_path, enabled = self.local_path, self.enabled
-        if not enabled:
-            return
-        root = Path(local_path)
-        if not root.is_dir():
+            folders = list(self.folders)
+        enabled_paths = [entry["path"] for entry in folders if entry["enabled"]]
+        if not enabled_paths:
             return
         try:
             manager = self.get_manager()
@@ -94,6 +97,14 @@ class FolderSync:
         except Exception:
             return  # not signed in yet — retry on the next tick
 
+        for local_path in enabled_paths:
+            self._scan_folder(manager, graph, local_path)
+
+    def _scan_folder(self, manager, graph, local_path):
+        root = Path(local_path)
+        if not root.is_dir():
+            return
+        cache = self._folder_caches.setdefault(local_path, {})
         mirror_name = root.name or "onedrive-sync"
         for path in sorted(p for p in root.rglob("*") if p.is_file()):
             relative = path.relative_to(root)
@@ -102,16 +113,16 @@ class FolderSync:
             if self.state_store.get(local_path, str(relative)) == fingerprint:
                 continue
             segments = (mirror_name,) + relative.parent.parts
-            parent_id = self._remote_folder_id(graph, segments)
+            parent_id = self._remote_folder_id(graph, cache, segments)
             manager.start_upload(parent_id, str(path), path.name,
                                   on_complete=self._make_on_complete(local_path, str(relative), fingerprint))
 
-    def _remote_folder_id(self, graph, segments):
-        if segments in self._folder_cache:
-            return self._folder_cache[segments]
-        parent_id = self._remote_folder_id(graph, segments[:-1]) if len(segments) > 1 else None
+    def _remote_folder_id(self, graph, cache, segments):
+        if segments in cache:
+            return cache[segments]
+        parent_id = self._remote_folder_id(graph, cache, segments[:-1]) if len(segments) > 1 else None
         folder_id = graph.find_or_create_folder(parent_id, segments[-1])
-        self._folder_cache[segments] = folder_id
+        cache[segments] = folder_id
         return folder_id
 
     def _make_on_complete(self, local_path, relative, fingerprint):
