@@ -23,6 +23,8 @@ Item {
         service.uploadStartPath = (settings && settings.uploadStartPath) || ""
         service.barSection = (settings && settings.position) || "right"
         service.language = (settings && settings.language) || "en"
+        service.trackedFolder = (settings && settings.trackedFolder) || ""
+        service.trackedFolderEnabled = !!(settings && settings.trackedFolderEnabled)
     }
 
     implicitWidth: content.implicitWidth

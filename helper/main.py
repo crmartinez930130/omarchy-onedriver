@@ -3,6 +3,7 @@ import urllib.request
 from .graph import GraphClient, GraphError
 from .ipc import serve
 from .oauth import OAuthClient
+from .sync import FolderSync, SyncStateStore
 from .tokens import TokenStore
 from .transfers import TransferManager
 
@@ -13,6 +14,8 @@ class Helper:
         self.tokens = self.store.load()
         self.events = []
         self.transfers = None
+        self.sync = FolderSync(get_manager=self._manager, get_graph=self._graph, state_store=SyncStateStore())
+        self.sync.start()
 
     def dispatch(self, method, params):
         try:
@@ -65,6 +68,9 @@ class Helper:
             return self._manager().start_download(params["itemId"], params["destination"], params["name"])
         if method == "transfer.upload":
             return self._manager().start_upload(params["parentId"], params["source"], params["name"])
+        if method == "sync.configure":
+            self.sync.configure(params.get("localPath", ""), bool(params.get("enabled")))
+            return {"configured": True}
         if method == "auth.login":
             return self.login()
         raise ValueError("Unknown method")

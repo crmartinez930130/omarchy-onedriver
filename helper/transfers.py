@@ -24,8 +24,8 @@ class TransferManager:
     def start_download(self, item_id, destination, name):
         return self._start("download", name, lambda job: self._download(job, item_id, Path(destination)))
 
-    def start_upload(self, parent_id, source, name):
-        return self._start("upload", name, lambda job: self._upload(job, parent_id, Path(source), name))
+    def start_upload(self, parent_id, source, name, on_complete=None):
+        return self._start("upload", name, lambda job: self._upload(job, parent_id, Path(source), name), on_complete)
 
     def cancel(self, transfer_id):
         job = self.jobs.get(transfer_id)
@@ -56,17 +56,17 @@ class TransferManager:
         for transfer_id in expired:
             del self.jobs[transfer_id]
 
-    def _start(self, direction, name, work):
+    def _start(self, direction, name, work, on_complete=None):
         transfer_id = uuid.uuid4().hex
         job = {"id": transfer_id, "direction": direction, "name": name,
                "bytesCompleted": 0, "bytesTotal": 0, "state": "queued",
                "error": None, "finishedAt": None, "cancel": threading.Event()}
         with self.lock:
             self.jobs[transfer_id] = job
-        threading.Thread(target=self._run, args=(job, work), daemon=True).start()
+        threading.Thread(target=self._run, args=(job, work, on_complete), daemon=True).start()
         return self._public(job)
 
-    def _run(self, job, work):
+    def _run(self, job, work, on_complete=None):
         job["state"] = "running"
         self._publish(job)
         try:
@@ -79,6 +79,11 @@ class TransferManager:
             traceback.print_exc(file=sys.stderr)
         job["finishedAt"] = time.monotonic()
         self._publish(job)
+        if on_complete:
+            try:
+                on_complete(job)
+            except Exception:
+                traceback.print_exc(file=sys.stderr)
 
     def _opening_call(self, call):
         try:

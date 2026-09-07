@@ -30,7 +30,10 @@ var translations = {
         selectThisFolder: "Select this folder",
         connectAccount: "Connect your OneDrive account",
         personalAccountsOnly: "Personal Microsoft accounts only",
-        signIn: "Sign in"
+        signIn: "Sign in",
+        trackedFolder: "Tracked folder",
+        trackedFolderDefault: "Not set",
+        autoUpload: "Auto-upload"
     },
     es: {
         settingsTitle: "Ajustes",
@@ -61,7 +64,10 @@ var translations = {
         selectThisFolder: "Seleccionar esta carpeta",
         connectAccount: "Conectá tu cuenta de OneDrive",
         personalAccountsOnly: "Solo cuentas personales de Microsoft",
-        signIn: "Iniciar sesión"
+        signIn: "Iniciar sesión",
+        trackedFolder: "Carpeta trackeada",
+        trackedFolderDefault: "Sin configurar",
+        autoUpload: "Subida automática"
     }
 }
 

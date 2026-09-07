@@ -19,6 +19,7 @@ from tokens import TokenStore
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from helper.graph import GraphClient, GraphError, _DropAuthOnRedirect
 from helper.main import Helper
+from helper.sync import FolderSync, SyncStateStore
 from helper.transfers import TransferManager
 
 
@@ -228,6 +229,120 @@ class TransferManagerLifecycleTests(unittest.TestCase):
         result = manager.list()
         self.assertEqual(len(result), 1)
         self.assertNotIn("finishedAt", result[0])
+
+
+class SyncStateStoreTests(unittest.TestCase):
+    def test_round_trip_persists_across_instances(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sync_state.json"
+            store = SyncStateStore(path)
+            store.set("/local", "a.txt", {"mtime": 1.0, "size": 2})
+            reloaded = SyncStateStore(path)
+            self.assertEqual(reloaded.get("/local", "a.txt"), {"mtime": 1.0, "size": 2})
+
+    def test_missing_entry_returns_none(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = SyncStateStore(Path(directory) / "sync_state.json")
+            self.assertIsNone(store.get("/local", "a.txt"))
+
+
+class FakeSyncGraph:
+    def __init__(self):
+        self.calls = []
+        self._next_id = 1
+        self._existing = {}
+
+    def find_or_create_folder(self, parent_id, name):
+        self.calls.append((parent_id, name))
+        key = (parent_id, name.lower())
+        if key not in self._existing:
+            self._existing[key] = f"folder-{self._next_id}"
+            self._next_id += 1
+        return self._existing[key]
+
+
+class FakeSyncManager:
+    def __init__(self, final_state="completed"):
+        self.uploads = []
+        self.final_state = final_state
+
+    def start_upload(self, parent_id, source, name, on_complete=None):
+        self.uploads.append((parent_id, source, name))
+        if on_complete:
+            on_complete({"id": "t", "state": self.final_state})
+
+
+class FolderSyncTests(unittest.TestCase):
+    def _syncer(self, manager, graph, state_dir):
+        store = SyncStateStore(Path(state_dir) / "sync_state.json")
+        return FolderSync(get_manager=lambda: manager, get_graph=lambda: graph, state_store=store)
+
+    def test_scan_uploads_new_files_and_mirrors_subfolders(self):
+        with tempfile.TemporaryDirectory() as local_dir, tempfile.TemporaryDirectory() as state_dir:
+            root = Path(local_dir) / "Sync"
+            (root / "sub").mkdir(parents=True)
+            (root / "top.txt").write_text("hello")
+            (root / "sub" / "nested.txt").write_text("world")
+
+            manager = FakeSyncManager()
+            graph = FakeSyncGraph()
+            syncer = self._syncer(manager, graph, state_dir)
+            syncer.configure(str(root), True)
+            syncer._scan_once()
+
+            names = sorted(name for (_parent, _source, name) in manager.uploads)
+            self.assertEqual(names, ["nested.txt", "top.txt"])
+            top_parent = next(p for p, _s, n in manager.uploads if n == "top.txt")
+            nested_parent = next(p for p, _s, n in manager.uploads if n == "nested.txt")
+            self.assertNotEqual(top_parent, nested_parent)
+            self.assertIn((None, "Sync"), graph.calls)
+            self.assertIn((top_parent, "sub"), graph.calls)
+
+    def test_scan_skips_files_already_synced(self):
+        with tempfile.TemporaryDirectory() as local_dir, tempfile.TemporaryDirectory() as state_dir:
+            root = Path(local_dir) / "Sync"
+            root.mkdir()
+            (root / "top.txt").write_text("hello")
+
+            manager = FakeSyncManager()
+            syncer = self._syncer(manager, FakeSyncGraph(), state_dir)
+            syncer.configure(str(root), True)
+            syncer._scan_once()
+            self.assertEqual(len(manager.uploads), 1)
+
+            manager.uploads.clear()
+            syncer._scan_once()
+            self.assertEqual(manager.uploads, [])
+
+    def test_failed_upload_is_retried_next_scan(self):
+        with tempfile.TemporaryDirectory() as local_dir, tempfile.TemporaryDirectory() as state_dir:
+            root = Path(local_dir) / "Sync"
+            root.mkdir()
+            (root / "top.txt").write_text("hello")
+
+            manager = FakeSyncManager(final_state="failed")
+            syncer = self._syncer(manager, FakeSyncGraph(), state_dir)
+            syncer.configure(str(root), True)
+            syncer._scan_once()
+            manager.uploads.clear()
+            syncer._scan_once()
+            self.assertEqual(len(manager.uploads), 1)
+
+    def test_disabled_or_unset_path_does_nothing(self):
+        with tempfile.TemporaryDirectory() as local_dir, tempfile.TemporaryDirectory() as state_dir:
+            root = Path(local_dir) / "Sync"
+            root.mkdir()
+            (root / "top.txt").write_text("hello")
+
+            manager = FakeSyncManager()
+            syncer = self._syncer(manager, FakeSyncGraph(), state_dir)
+            syncer.configure(str(root), False)
+            syncer._scan_once()
+            self.assertEqual(manager.uploads, [])
+
+            syncer.configure("", True)
+            syncer._scan_once()
+            self.assertEqual(manager.uploads, [])
 
 
 if __name__ == "__main__":

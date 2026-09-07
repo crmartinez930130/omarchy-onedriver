@@ -20,7 +20,9 @@
       "downloadPath": "",
       "uploadStartPath": "",
       "position": "right",
-      "language": "en"
+      "language": "en",
+      "trackedFolder": "",
+      "trackedFolderEnabled": false
     },
     "schema": [
       {
@@ -52,6 +54,20 @@
         "options": ["en", "es"],
         "defaultValue": "en",
         "description": "Interface language for the panel."
+      },
+      {
+        "key": "trackedFolder",
+        "type": "path",
+        "label": "Tracked folder",
+        "defaultValue": "",
+        "description": "Local folder to watch. New or changed files are uploaded automatically to a matching folder at the root of your OneDrive."
+      },
+      {
+        "key": "trackedFolderEnabled",
+        "type": "boolean",
+        "label": "Enable folder tracking",
+        "defaultValue": false,
+        "description": "Turn automatic upload on or off for the tracked folder."
       }
     ]
   }

@@ -92,6 +92,12 @@ class GraphClient:
     def create_folder(self, parent_id, name):
         return self._write("POST", f"/me/drive/{self._item_ref(parent_id)}/children", {"name": name, "folder": {}})
 
+    def find_or_create_folder(self, parent_id, name):
+        for item in self.list_children(parent_id):
+            if item["folder"] is not None and item["name"].lower() == name.lower():
+                return item["id"]
+        return self.create_folder(parent_id, name)["id"]
+
     def rename(self, item_id, name):
         return self._write("PATCH", f"/me/drive/items/{urllib.parse.quote(item_id)}", {"name": name})
 

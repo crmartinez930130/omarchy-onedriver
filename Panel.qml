@@ -384,6 +384,34 @@ Item {
                     }
                 }
 
+                SettingsRow {
+                    Layout.topMargin: 10
+                    text: root.tr("trackedFolder")
+                    value: (root.service && root.service.trackedFolder) ? root.service.trackedFolder : root.tr("trackedFolderDefault")
+                    onClicked: {
+                        trackedFolderDialog.startPath = root.service ? root.service.trackedFolder : ""
+                        trackedFolderDialog.open()
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+
+                    Label {
+                        text: root.tr("autoUpload")
+                        color: Theme.text
+                        font.pixelSize: 13
+                        Layout.fillWidth: true
+                    }
+
+                    ToggleSwitch {
+                        checked: root.service ? root.service.trackedFolderEnabled : false
+                        enabled: root.service && root.service.trackedFolder !== ""
+                        onToggled: if (root.service) root.service.setTrackedFolderEnabled(checked)
+                    }
+                }
+
                 Item { Layout.fillHeight: true }
             }
         }
@@ -499,6 +527,32 @@ Item {
                 ? (option.down ? Qt.darker(Theme.accent, 1.3) : (option.hovered ? Qt.darker(Theme.accent, 1.15) : Theme.accent))
                 : (option.down ? Theme.border : (option.hovered ? Theme.surfaceHover : "transparent"))
         }
+    }
+
+    component ToggleSwitch: Switch {
+        id: toggle
+        implicitWidth: 40
+        implicitHeight: 22
+        indicator: Rectangle {
+            x: toggle.leftPadding
+            y: toggle.height / 2 - height / 2
+            width: 40
+            height: 22
+            radius: 11
+            color: toggle.checked ? Theme.accent : Theme.border
+            opacity: toggle.enabled ? 1.0 : 0.4
+
+            Rectangle {
+                width: 18
+                height: 18
+                radius: 9
+                y: 2
+                x: toggle.checked ? parent.width - width - 2 : 2
+                color: Theme.background
+                Behavior on x { NumberAnimation { duration: 120 } }
+            }
+        }
+        contentItem: Item {}
     }
 
     component DialogFooter: Item {
@@ -802,5 +856,11 @@ Item {
         id: downloadFolderDialog
         dialogTitle: root.tr("downloadFolder")
         onConfirmed: function (path) { if (root.service) root.service.setDownloadPath(path) }
+    }
+
+    FolderPickerDialog {
+        id: trackedFolderDialog
+        dialogTitle: root.tr("trackedFolder")
+        onConfirmed: function (path) { if (root.service) root.service.setTrackedFolder(path) }
     }
 }

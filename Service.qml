@@ -22,6 +22,11 @@ Item {
     property string accountName: ""
     property string accountEmail: ""
     property string language: "en"
+    property string trackedFolder: ""
+    property bool trackedFolderEnabled: false
+
+    onTrackedFolderChanged: _pushSyncConfig()
+    onTrackedFolderEnabledChanged: _pushSyncConfig()
 
     property string currentFolderId: ""
     property string currentFolderName: "OneDrive"
@@ -93,9 +98,30 @@ Item {
         _persistSetting("language", lang)
     }
 
-    function _persistSetting(key, value) {
+    function setTrackedFolder(path) {
+        root.trackedFolder = path
+        _persistSetting("trackedFolder", path)
+    }
+
+    function setTrackedFolderEnabled(enabled) {
+        root.trackedFolderEnabled = enabled
+        _persistSetting("trackedFolderEnabled", enabled ? "true" : "false", true)
+    }
+
+    // Tells the helper's background FolderSync what to watch. Fires whenever
+    // either half of the config changes, including the settings-injection
+    // pass on shell/plugin restart (see BarWidget._syncSettings) — not just
+    // user-initiated changes — since the helper is a fresh process each time
+    // and starts out not watching anything.
+    function _pushSyncConfig() {
+        _call("sync.configure", {localPath: root.trackedFolder, enabled: root.trackedFolderEnabled}, null, true)
+    }
+
+    function _persistSetting(key, value, asJson) {
         if (settingsProcess.running) return
-        settingsProcess.command = ["omarchy", "bar", "set", root.moduleName, key, value]
+        var command = ["omarchy", "bar", "set", root.moduleName, key, value]
+        if (asJson) command.push("--json")
+        settingsProcess.command = command
         settingsProcess.running = true
     }
 
