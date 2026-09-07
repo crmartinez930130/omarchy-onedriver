@@ -482,6 +482,7 @@ Item {
         property bool selected: false
         hoverEnabled: true
         Layout.fillWidth: true
+        implicitWidth: 82
         implicitHeight: 30
         contentItem: Text {
             text: option.text
