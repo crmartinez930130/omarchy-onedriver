@@ -103,11 +103,18 @@ Click the ⚙ button in the panel to open Settings:
 - **Tracked folders** — add any number of local folders with the **+**
   button; each has its own on/off toggle. New or changed files inside an
   enabled folder are uploaded automatically to a same-named folder at the
-  root of your OneDrive (subfolders included). This is one-way: it never
-  downloads anything back, and deleting a file locally does not delete it
-  from OneDrive. Files are picked up on a scan that runs roughly every 30
-  seconds per folder while the plugin is running, and show up in the normal
-  Transfers list like any other upload.
+  root of your OneDrive (subfolders included). Files are picked up on a scan
+  that runs roughly every 30 seconds per folder while the plugin is running,
+  and show up in the normal Transfers list like any other upload.
+
+  This is intentionally one-way (local → OneDrive), not a full sync client:
+  it never downloads anything back, and **deleting a file or the whole
+  folder locally does not delete anything from OneDrive** — the cloud copy
+  is left as-is. Propagating deletions would mean guessing whether a file
+  disappeared because you deleted it on purpose or because the folder went
+  temporarily missing (an unmounted drive, for example), which risks
+  deleting cloud files you never meant to touch. If you want something
+  gone from OneDrive, remove it there yourself.
 
 ## Development
 
