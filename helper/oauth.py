@@ -47,13 +47,13 @@ class OAuthClient:
         return self.exchange(result["code"])
 
     def authorization_url(self, state):
-        return self.authorize_url + "?" + urllib.parse.urlencode({"client_id": self.client_id, "response_type": "code", "redirect_uri": self.redirect_uri, "response_mode": "query", "scope": "Files.ReadWrite offline_access", "state": state})
+        return self.authorize_url + "?" + urllib.parse.urlencode({"client_id": self.client_id, "response_type": "code", "redirect_uri": self.redirect_uri, "response_mode": "query", "scope": "Files.ReadWrite User.Read offline_access", "state": state})
 
     def exchange(self, code):
-        return self._token_request({"client_id": self.client_id, "grant_type": "authorization_code", "code": code, "redirect_uri": self.redirect_uri, "scope": "Files.ReadWrite offline_access"})
+        return self._token_request({"client_id": self.client_id, "grant_type": "authorization_code", "code": code, "redirect_uri": self.redirect_uri, "scope": "Files.ReadWrite User.Read offline_access"})
 
     def refresh(self, refresh_token):
-        return self._token_request({"client_id": self.client_id, "grant_type": "refresh_token", "refresh_token": refresh_token, "scope": "Files.ReadWrite offline_access"})
+        return self._token_request({"client_id": self.client_id, "grant_type": "refresh_token", "refresh_token": refresh_token, "scope": "Files.ReadWrite User.Read offline_access"})
 
     def _token_request(self, values):
         payload = urllib.parse.urlencode(values).encode()

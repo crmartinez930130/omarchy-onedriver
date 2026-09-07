@@ -109,10 +109,16 @@ Item {
         }
     }
 
-    function _call(method, params, onResult) {
+    property var _silentIds: ({})
+
+    // `silent` is for calls whose failure shouldn't blank the panel with an
+    // error banner over a merely decorative feature (e.g. the account label)
+    // — a real session expiry still resyncs signedIn either way.
+    function _call(method, params, onResult, silent) {
         if (!helperProcess.running) start()
         var id = String(root._nextId++)
         root._pending[id] = onResult || null
+        if (silent) root._silentIds[id] = true
         helperProcess.write(JSON.stringify({id: id, method: method, params: params || {}}) + "\n")
     }
 
@@ -128,10 +134,13 @@ Item {
         var id = message.id !== undefined && message.id !== null ? String(message.id) : ""
         var callback = root._pending[id]
         if (callback !== undefined) delete root._pending[id]
+        var silent = !!root._silentIds[id]
+        if (silent) delete root._silentIds[id]
         if (!message.ok) {
-            root.lastError = (message.error && message.error.message) || "Request failed"
-            if (callback) callback(null, root.lastError)
-            if (root.lastError === root._sessionExpiredMessage) root.refreshStatus()
+            var errorMessage = (message.error && message.error.message) || "Request failed"
+            if (!silent) root.lastError = errorMessage
+            if (errorMessage === root._sessionExpiredMessage) root.refreshStatus()
+            if (callback) callback(null, errorMessage)
             return
         }
         if (callback) callback(message.result, null)
@@ -193,7 +202,7 @@ Item {
             if (error) return
             root.accountName = (result && result.displayName) || ""
             root.accountEmail = (result && result.email) || ""
-        })
+        }, true)
     }
 
     function openFolder(itemId, name) {

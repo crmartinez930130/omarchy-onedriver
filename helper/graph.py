@@ -44,7 +44,10 @@ class GraphClient:
     def _graph_error(error):
         try:
             payload = json.loads(error.read())
-            message = payload.get("error", {}).get("message", "Graph request failed")
+            # Graph sometimes replies with an empty "message" (e.g. a 401 from
+            # a token that's valid but missing the scope the endpoint needs) —
+            # `or` catches that in addition to a missing key.
+            message = payload.get("error", {}).get("message") or "Graph request failed"
         except (ValueError, AttributeError):
             message = "Graph request failed"
         return GraphError(error.code, message)
