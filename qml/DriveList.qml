@@ -10,10 +10,14 @@ ListView {
     property string fontFamily: "monospace"
     property string renameLabel: "Rename"
     property string deleteLabel: "Delete"
+    property string openInBrowserLabel: "Open in browser"
+    property string copyLinkLabel: "Copy link"
     signal folderRequested(string itemId, string name)
     signal fileRequested(string itemId, string name)
     signal renameRequested(string itemId, string name)
     signal deleteRequested(string itemId, string name)
+    signal openInBrowserRequested(string webUrl)
+    signal copyLinkRequested(string webUrl)
 
     clip: true
     spacing: 2
@@ -26,6 +30,7 @@ ListView {
         required property string name
         required property bool isFolder
         required property real size
+        required property string webUrl
 
         width: root.width
         height: 42
@@ -94,8 +99,13 @@ ListView {
                     id: rowMenu
                     renameLabel: root.renameLabel
                     deleteLabel: root.deleteLabel
+                    openInBrowserLabel: root.openInBrowserLabel
+                    copyLinkLabel: root.copyLinkLabel
+                    hasWebUrl: row.webUrl !== ""
                     onRenameRequested: root.renameRequested(row.itemId, row.name)
                     onDeleteRequested: root.deleteRequested(row.itemId, row.name)
+                    onOpenInBrowserRequested: root.openInBrowserRequested(row.webUrl)
+                    onCopyLinkRequested: root.copyLinkRequested(row.webUrl)
                 }
             }
         }

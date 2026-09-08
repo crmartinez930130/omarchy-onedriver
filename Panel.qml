@@ -34,7 +34,8 @@ Item {
                 itemId: entry.id,
                 name: entry.name,
                 isFolder: entry.isFolder,
-                size: entry.size
+                size: entry.size,
+                webUrl: entry.webUrl || ""
             })
         }
     }
@@ -238,6 +239,8 @@ Item {
                             fontFamily: root.fontFamily
                             renameLabel: root.tr("rename")
                             deleteLabel: root.tr("deleteAction")
+                            openInBrowserLabel: root.tr("openInBrowser")
+                            copyLinkLabel: root.tr("copyLink")
                             model: itemsModel
                             onFolderRequested: function (itemId, name) { root.service.openFolder(itemId, name) }
                             onFileRequested: function (itemId, name) { root.service.startDownload(itemId, name) }
@@ -251,6 +254,8 @@ Item {
                                 deleteConfirm.message = Strings.deleteConfirmMessage(root.language, name)
                                 deleteConfirm.open()
                             }
+                            onOpenInBrowserRequested: function (webUrl) { if (webUrl) Qt.openUrlExternally(webUrl) }
+                            onCopyLinkRequested: function (webUrl) { if (root.service) root.service.copyLink(webUrl) }
                         }
 
                         Label {

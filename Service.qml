@@ -161,6 +161,17 @@ Item {
         }
     }
 
+    function copyLink(url) {
+        if (!url) return
+        copyProcess.command = ["wl-copy", url]
+        copyProcess.running = true
+    }
+
+    Process {
+        id: copyProcess
+        command: []
+    }
+
     property var _silentIds: ({})
 
     // `silent` is for calls whose failure shouldn't blank the panel with an

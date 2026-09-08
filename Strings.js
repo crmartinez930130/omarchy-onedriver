@@ -33,7 +33,9 @@ var translations = {
         signIn: "Sign in",
         trackedFolders: "Tracked folders",
         addTrackedFolder: "Add folder",
-        noTrackedFolders: "No folders tracked yet."
+        noTrackedFolders: "No folders tracked yet.",
+        openInBrowser: "Open in browser",
+        copyLink: "Copy link"
     },
     es: {
         settingsTitle: "Ajustes",
@@ -67,7 +69,9 @@ var translations = {
         signIn: "Iniciar sesión",
         trackedFolders: "Carpetas trackeadas",
         addTrackedFolder: "Agregar carpeta",
-        noTrackedFolders: "Todavía no hay carpetas trackeadas."
+        noTrackedFolders: "Todavía no hay carpetas trackeadas.",
+        openInBrowser: "Abrir en el navegador",
+        copyLink: "Copiar enlace"
     }
 }
 
