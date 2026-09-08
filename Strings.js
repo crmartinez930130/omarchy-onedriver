@@ -86,3 +86,8 @@ function uploadCountLabel(lang, count) {
     if (lang === "es") return "Subir (" + count + ")"
     return "Upload (" + count + ")"
 }
+
+function storageLabel(lang, usedText, totalText) {
+    if (lang === "es") return usedText + " de " + totalText + " usados"
+    return usedText + " of " + totalText + " used"
+}

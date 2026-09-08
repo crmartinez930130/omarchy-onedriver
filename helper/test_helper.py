@@ -69,6 +69,17 @@ class HelperTests(unittest.TestCase):
         self.assertTrue(opener.urls[1].endswith("/me/drive/root/children"))
         self.assertTrue(opener.urls[2].endswith("/me/drive/root:/file.txt:/createUploadSession"))
 
+    def test_quota_reads_used_and_total_from_the_drive_response(self):
+        opener = _RecordingOpener(json.dumps({"quota": {"used": 123, "total": 456, "remaining": 333}}).encode())
+        client = GraphClient("token", opener=opener)
+        self.assertEqual(client.quota(), {"used": 123, "total": 456})
+        self.assertTrue(opener.urls[0].endswith("/me/drive"))
+
+    def test_quota_defaults_to_zero_when_the_field_is_missing(self):
+        opener = _RecordingOpener(json.dumps({}).encode())
+        client = GraphClient("token", opener=opener)
+        self.assertEqual(client.quota(), {"used": 0, "total": 0})
+
 
 class _RecordingOpener:
     def __init__(self, body):

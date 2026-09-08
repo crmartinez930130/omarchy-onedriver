@@ -21,6 +21,8 @@ Item {
     property string barSection: "right"
     property string accountName: ""
     property string accountEmail: ""
+    property real quotaUsed: 0
+    property real quotaTotal: 0
     property string language: "en"
     property var trackedFolders: []  // [{path: string, enabled: bool}, ...]
 
@@ -209,6 +211,8 @@ Item {
         root.currentFolderName = "OneDrive"
         root.accountName = ""
         root.accountEmail = ""
+        root.quotaUsed = 0
+        root.quotaTotal = 0
     }
 
     function refreshStatus() {
@@ -245,6 +249,7 @@ Item {
         root.folderStack = []
         _load("", "OneDrive")
         _loadAccount()
+        _loadQuota()
     }
 
     function _loadAccount() {
@@ -252,6 +257,14 @@ Item {
             if (error) return
             root.accountName = (result && result.displayName) || ""
             root.accountEmail = (result && result.email) || ""
+        }, true)
+    }
+
+    function _loadQuota() {
+        _call("drive.quota", {}, function (result, error) {
+            if (error) return
+            root.quotaUsed = (result && result.used) || 0
+            root.quotaTotal = (result && result.total) || 0
         }, true)
     }
 

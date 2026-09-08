@@ -50,6 +50,8 @@ class Helper:
             return self.refresh()
         if method == "auth.me":
             return self._graph().me()
+        if method == "drive.quota":
+            return self._graph().quota()
         if method == "drive.list":
             return {"items": self._graph().list_children(params.get("itemId"))}
         if method == "drive.mkdir":

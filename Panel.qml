@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import "qml" as Components
 import "Theme.js" as Theme
 import "Strings.js" as Strings
+import "Model.js" as Model
 
 Item {
     id: root
@@ -321,6 +322,14 @@ Item {
                 Layout.fillHeight: true
                 visible: root.showSettings
                 spacing: 4
+
+                Label {
+                    visible: root.service && root.service.quotaTotal > 0
+                    text: root.service ? Strings.storageLabel(root.language, Model.formatBytes(root.service.quotaUsed), Model.formatBytes(root.service.quotaTotal)) : ""
+                    color: Theme.textMuted
+                    font.pixelSize: 12
+                    Layout.bottomMargin: 6
+                }
 
                 SettingsRow {
                     text: root.tr("downloadFolder")

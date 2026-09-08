@@ -64,6 +64,11 @@ class GraphClient:
         return {"displayName": profile.get("displayName"),
                 "email": profile.get("mail") or profile.get("userPrincipalName")}
 
+    def quota(self):
+        drive = self._request("GET", "/me/drive")
+        info = drive.get("quota") or {}
+        return {"used": info.get("used", 0), "total": info.get("total", 0)}
+
     def create_upload_session(self, parent_id, name):
         result = self._write("POST", f"/me/drive/{self._item_ref(parent_id)}:/{urllib.parse.quote(name)}:/createUploadSession", {"item": {"@microsoft.graph.conflictBehavior": "replace"}})
         return result["uploadUrl"]
