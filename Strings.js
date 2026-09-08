@@ -95,3 +95,15 @@ function storageLabel(lang, usedText, totalText) {
     if (lang === "es") return usedText + " de " + totalText + " usados"
     return usedText + " of " + totalText + " used"
 }
+
+function transferNotification(lang, transfer) {
+    var upload = transfer.direction === "upload"
+    if (lang === "es") {
+        var actionEs = upload ? "Subida" : "Descarga"
+        if (transfer.state === "failed") return actionEs + " fallida: " + transfer.name + (transfer.error ? " (" + transfer.error + ")" : "")
+        return actionEs + " completa: " + transfer.name
+    }
+    var actionEn = upload ? "Upload" : "Download"
+    if (transfer.state === "failed") return actionEn + " failed: " + transfer.name + (transfer.error ? " (" + transfer.error + ")" : "")
+    return actionEn + " complete: " + transfer.name
+}

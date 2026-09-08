@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "Model.js" as Model
+import "Strings.js" as Strings
 
 Item {
     id: root
@@ -355,7 +356,24 @@ Item {
             var next = Array.isArray(result) ? result : []
             root.transfers = next
             if (root._hasNewlyCompletedUpload(previous, next)) _load(root.currentFolderId, root.currentFolderName)
+            root._notifyFinishedTransfers(previous, next)
         })
+    }
+
+    // One notification per transfer, fired the same poll tick its state
+    // first reads back as completed/failed — covers background uploads from
+    // a tracked folder just as much as a manual upload/download, since both
+    // go through the same transfer.list poll either way.
+    function _notifyFinishedTransfers(previous, next) {
+        for (var i = 0; i < next.length; i++) {
+            var transfer = next[i]
+            if (transfer.state !== "completed" && transfer.state !== "failed") continue
+            var alreadyFinished = previous.some(function (item) {
+                return item.id === transfer.id && (item.state === "completed" || item.state === "failed")
+            })
+            if (alreadyFinished) continue
+            Quickshell.execDetached(["notify-send", "OneDrive", Strings.transferNotification(root.language, transfer)])
+        }
     }
 
     // Uploads mutate the folder we're looking at, but only once the transfer
