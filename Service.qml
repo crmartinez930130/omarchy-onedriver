@@ -207,7 +207,16 @@ Item {
             if (callback) callback(null, errorMessage)
             return
         }
+        // A later successful round-trip means whatever caused the last
+        // error has passed — don't leave a stale banner up once things are
+        // working again. Silent calls count too: even a background poll
+        // succeeding is a good enough signal.
+        if (root.lastError !== "") root.lastError = ""
         if (callback) callback(message.result, null)
+    }
+
+    function dismissError() {
+        root.lastError = ""
     }
 
     // Must match the RuntimeError message main.py raises when a 401 survives

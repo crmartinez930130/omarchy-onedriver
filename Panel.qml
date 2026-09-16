@@ -157,16 +157,27 @@ Item {
                     visible: root.service && root.service.lastError !== ""
                     radius: 6
                     color: Qt.rgba(0.95, 0.55, 0.66, 0.12)
-                    implicitHeight: errorLabel.implicitHeight + 12
+                    implicitHeight: errorRow.implicitHeight + 12
 
-                    Label {
-                        id: errorLabel
+                    RowLayout {
+                        id: errorRow
                         anchors.fill: parent
                         anchors.margins: 6
-                        text: root.service ? root.service.lastError : ""
-                        color: Theme.error
-                        wrapMode: Text.WordWrap
-                        font.pixelSize: 11
+                        spacing: 4
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: root.service ? root.service.lastError : ""
+                            color: Theme.error
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 11
+                        }
+
+                        GhostButton {
+                            text: "✕"
+                            Layout.alignment: Qt.AlignTop
+                            onClicked: if (root.service) root.service.dismissError()
+                        }
                     }
                 }
 
