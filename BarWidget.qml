@@ -1,13 +1,15 @@
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
+// Namespaced so qs.Ui's own Panel type doesn't shadow our local Panel.qml.
+import qs.Ui as Ui
 
-Item {
+// Extends the shell's BarWidget base, which declares the `bar`, `settings`,
+// `vertical` and `barSize` properties the bar host injects into each slot.
+Ui.BarWidget {
     id: root
 
-    property string moduleName: "crmartinez.onedrive"
-    property var bar: null
-    property var settings: ({})
+    moduleName: "crmartinez.onedrive"
 
     readonly property var service: bar && bar.shell ? bar.shell.serviceFor(root.moduleName) : null
     readonly property bool signedIn: service ? service.signedIn : false
@@ -36,15 +38,12 @@ Item {
         }
     }
 
-    implicitWidth: content.implicitWidth
-    // The bar loads third-party widgets through a Loader whose own slot
-    // ends up zero-height for us (unlike first-party widgets, which extend
-    // a base class that sizes itself correctly) — anchors.fill: parent just
-    // inherits that zero, and so does bar.height (a logical coordinator
-    // object, not the rendered surface). QsWindow.window is the actual
-    // PanelWindow behind the bar, so its height is the real one.
-    implicitHeight: root.QsWindow.window ? root.QsWindow.window.height : content.implicitHeight
-    height: implicitHeight
+    // Size to the bar's thickness, never to the window: since Omarchy 4.5 the
+    // bar's PanelWindow spans the whole screen, so its height (1080px on a
+    // 1080p monitor) blew this slot up and pushed every widget after it off
+    // the bar.
+    implicitWidth: root.vertical ? root.barSize : content.implicitWidth + 8
+    implicitHeight: root.vertical ? content.implicitHeight + 8 : root.barSize
 
     Row {
         id: content
